@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "Campus Innovate",
+    "slug": "campus_innovate",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "campusinnovate",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "co.edu.uninorte.campusinnovate"
+    },
+    "android": {
+      "package": "co.edu.uninorte.campusinnovate",
+      "adaptiveIcon": {
+        "backgroundColor": "#30C7E7",
+        "foregroundImage": "./assets/images/android-icon-foreground.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "softwareKeyboardLayoutMode": "resize"
+    },
+    "web": {
+      "output": "single",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#F3F1F5",
+          "dark": {
+            "backgroundColor": "#16151A"
+          }
+        }
+      ],
+      "expo-font",
+      "expo-image",
+      "expo-status-bar",
+      "expo-document-picker"
+    ],
+    "experiments": {
+      "reactCompiler": true
+    }
+  }
+}
