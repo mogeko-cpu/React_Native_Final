@@ -1,12 +1,11 @@
-# Campus Innovate · React Native
+## Video
 
-Versión para teléfono, en **React Native (Expo)**, de
-[Campus Innovate](https://github.com/mogeko-cpu/Campus_Innovate), la plataforma
-universitaria de proyectos colaborativos hecha originalmente en Flutter. Está
-construida con la arquitectura de
-[r_market](https://github.com/augustosalazar/r_market) y habla con el **mismo
-proyecto de Roble** que la versión Flutter (`campus_innov_0ee3af93b1`), así que
-las dos apps comparten cuentas, tablas y datos.
+Link: https://youtu.be/kB93CcpH0KY
+
+## Integrantes:
+
+GONZALEZ QUINTANILLA, SEBASTIAN
+TRIANA MARTINEZ, LEONEL
 
 ## Qué hace
 
@@ -46,6 +45,10 @@ npm install
 npm start
 ```
 
+## Importante
+
+La app debe abrirse en el puerto: 5123, de lo contrario no funcionara.
+
 Escanea el código QR con Expo Go (Android) o con la cámara (iPhone). El teléfono
 y el computador deben estar en la misma red; si no, usa `npx expo start --tunnel`.
 
@@ -59,7 +62,7 @@ Para ver la app sin conexión a Roble, con un campus de ejemplo en memoria:
 
 ```bash
 npm run start:local     # en el teléfono
-npm run web:local       # en el navegador
+npm run web:local       # en el navegador: http://localhost:5123
 ```
 
 Entra con `mariana@uninorte.edu.co` / `Campus123!` (el login ya viene lleno).
@@ -67,15 +70,15 @@ Lo que hagas se pierde al cerrar la app.
 
 ### Comandos
 
-| Comando | Qué hace |
-|---|---|
-| `npm start` | Servidor de desarrollo (Expo Go) contra Roble |
-| `npm run android` / `npm run ios` | Abre directo en el emulador |
-| `npm run web` | La app en el navegador |
-| `npm run start:local` / `npm run web:local` | La app con datos de demostración, sin servidor |
-| `npm run test:ci` | Todas las pruebas, una vez |
-| `npm run typecheck` | TypeScript sin emitir |
-| `npm run lint` | ESLint de Expo |
+| Comando                                     | Qué hace                                         |
+| ------------------------------------------- | ------------------------------------------------ |
+| `npm start`                                 | Servidor de desarrollo (Expo Go) contra Roble    |
+| `npm run android` / `npm run ios`           | Abre directo en el emulador                      |
+| `npm run web`                               | La app en el navegador, en http://localhost:5123 |
+| `npm run start:local` / `npm run web:local` | La app con datos de demostración, sin servidor   |
+| `npm run test:ci`                           | Todas las pruebas, una vez                       |
+| `npm run typecheck`                         | TypeScript sin emitir                            |
+| `npm run lint`                              | ESLint de Expo                                   |
 
 ## Arquitectura
 
@@ -131,17 +134,17 @@ features/<nombre>/
 
 ### Equivalencias con Flutter
 
-| Flutter | React Native |
-|---|---|
-| `GetxController` + `Obx` | hook `useXxxViewModel` con `useState` |
-| `Get.find` / `Bindings` | `Container` + `useInject(TOKENS.X)` |
-| `GetMaterialApp` + rutas con nombre | React Navigation (stack + pestañas) |
-| `Get.snackbar` / `Get.dialog` | `useSnackbar()` / `useConfirm()` |
-| `FlexColorScheme` + Google Fonts | `react-native-paper` (MD3) + `@expo-google-fonts` |
-| `Poller` | `usePoller` (se pausa si otra pantalla queda encima) |
-| `flutter_secure_storage` | AsyncStorage (vía `roble-client`) |
-| `file_picker` / `url_launcher` | `expo-document-picker` / `Linking` |
-| `RobleClient` HTTP propio | `roble-client` (npm) |
+| Flutter                             | React Native                                         |
+| ----------------------------------- | ---------------------------------------------------- |
+| `GetxController` + `Obx`            | hook `useXxxViewModel` con `useState`                |
+| `Get.find` / `Bindings`             | `Container` + `useInject(TOKENS.X)`                  |
+| `GetMaterialApp` + rutas con nombre | React Navigation (stack + pestañas)                  |
+| `Get.snackbar` / `Get.dialog`       | `useSnackbar()` / `useConfirm()`                     |
+| `FlexColorScheme` + Google Fonts    | `react-native-paper` (MD3) + `@expo-google-fonts`    |
+| `Poller`                            | `usePoller` (se pausa si otra pantalla queda encima) |
+| `flutter_secure_storage`            | AsyncStorage (vía `roble-client`)                    |
+| `file_picker` / `url_launcher`      | `expo-document-picker` / `Linking`                   |
+| `RobleClient` HTTP propio           | `roble-client` (npm)                                 |
 
 ## Cambios respecto a la versión Flutter
 

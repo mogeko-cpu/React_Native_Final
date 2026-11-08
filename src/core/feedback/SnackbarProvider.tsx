@@ -1,9 +1,12 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { Animated, Pressable, StyleSheet, View } from "react-native";
+import { Animated, Platform, Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAppTheme } from "@/src/theme/theme";
 import { T } from "../components/T";
+
+// En web no existe el módulo nativo de animación.
+const NATIVE_DRIVER = Platform.OS !== "web";
 
 type Toast = { title: string; message?: string; top?: boolean; error?: boolean };
 type Show = (title: string, message?: string, options?: { top?: boolean; error?: boolean }) => void;
@@ -22,7 +25,7 @@ export function SnackbarProvider({ children }: { children: React.ReactNode }) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const hide = useCallback(() => {
-    Animated.timing(opacity, { toValue: 0, duration: 180, useNativeDriver: true }).start(() => setToast(null));
+    Animated.timing(opacity, { toValue: 0, duration: 180, useNativeDriver: NATIVE_DRIVER }).start(() => setToast(null));
   }, [opacity]);
 
   const show = useCallback<Show>(
@@ -30,7 +33,7 @@ export function SnackbarProvider({ children }: { children: React.ReactNode }) {
       if (timer.current) clearTimeout(timer.current);
       setToast({ title, message, top: options?.top, error: options?.error, key: Date.now() });
       opacity.setValue(0);
-      Animated.timing(opacity, { toValue: 1, duration: 180, useNativeDriver: true }).start();
+      Animated.timing(opacity, { toValue: 1, duration: 180, useNativeDriver: NATIVE_DRIVER }).start();
       timer.current = setTimeout(hide, 3500);
     },
     [hide, opacity],

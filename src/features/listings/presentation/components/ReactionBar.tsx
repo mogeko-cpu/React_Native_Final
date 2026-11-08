@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Animated, View } from "react-native";
+import { Animated, Platform, View } from "react-native";
 
 import { AppButton } from "@/src/core/components/Buttons";
 import { Icon } from "@/src/core/components/Icon";
@@ -7,6 +7,9 @@ import { T } from "@/src/core/components/T";
 import { IconName } from "@/src/core/ui/icons";
 import { useAppTheme } from "@/src/theme/theme";
 import { ListingStats, ReactionType } from "../../domain/entities/ListingStats";
+
+// En web no existe el módulo nativo de animación.
+const NATIVE_DRIVER = Platform.OS !== "web";
 
 // Valorar un proyecto (`reaction_bar.dart`): me gusta / no me gusta, con un
 // pequeño salto al elegir, y las vistas y comentarios al lado.
@@ -43,8 +46,8 @@ function ReactionButton({ icon, selectedIcon, count, selected, onPress, testID }
   useEffect(() => {
     if (selected && !was.current) {
       Animated.sequence([
-        Animated.timing(scale, { toValue: 1.18, duration: 115, useNativeDriver: true }),
-        Animated.timing(scale, { toValue: 1, duration: 145, useNativeDriver: true }),
+        Animated.timing(scale, { toValue: 1.18, duration: 115, useNativeDriver: NATIVE_DRIVER }),
+        Animated.timing(scale, { toValue: 1, duration: 145, useNativeDriver: NATIVE_DRIVER }),
       ]).start();
     }
     was.current = selected;
