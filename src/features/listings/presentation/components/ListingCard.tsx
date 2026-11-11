@@ -19,17 +19,28 @@ export function ListingCard({
   listing,
   stats,
   leading,
+  note,
   onPress,
 }: {
   listing: Listing;
   stats?: ListingStats;
   leading?: React.ReactNode;
+  // Una línea arriba de todo (p. ej. por qué se recomienda).
+  note?: string;
   onPress: () => void;
 }) {
   const theme = useAppTheme();
   return (
-    <Card onPress={onPress} testID={`listing-card-${listing.id}`}>
+    <Card onPress={onPress} testID={`listing-card-${listing.id}`} accessibilityLabel={cardLabel(listing, note)}>
       <View style={{ padding: 18 }}>
+        {!!note && (
+          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
+            <Icon name="star-four-points-outline" size={15} color={theme.colors.tertiary} />
+            <T v="labelMedium" w={700} color={theme.colors.onTertiaryContainer} style={{ marginLeft: 6, flex: 1 }}>
+              {note}
+            </T>
+          </View>
+        )}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           {leading != null && <View style={{ marginRight: 10 }}>{leading}</View>}
           <CategoryPill category={listing.category} />
@@ -97,4 +108,12 @@ function SlotsBadge({ listing }: { listing: Listing }) {
       {slots === 1 ? "1 cupo libre" : `${slots} cupos libres`}
     </T>
   );
+}
+
+// Una frase para el lector de pantalla, en vez de leer cada pieza suelta.
+function cardLabel(listing: Listing, note?: string): string {
+  const parts = [listing.title, listing.category, `${memberCount(listing)} de ${listing.maxMembers} integrantes`];
+  if (acceptsRequests(listing.status)) parts.push(isFull(listing) ? "equipo completo" : `${availableSlots(listing)} cupos libres`);
+  if (note) parts.unshift(note);
+  return parts.join(". ");
 }

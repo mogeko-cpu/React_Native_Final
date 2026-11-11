@@ -140,7 +140,7 @@ export function TaskFormDialog({
         <Gap h={16} />
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <T style={{ flex: 1 }}>{dueDate ? `Vence el ${shortDay(dueDate)}` : "Sin fecha límite"}</T>
-          {dueDate != null && <IconButton accessibilityLabel="Quitar fecha" icon="close" onPress={() => setDueDate(null)} />}
+          {dueDate != null && <IconButton hitSlop={6} accessibilityLabel="Quitar fecha" icon="close" onPress={() => setDueDate(null)} />}
           <AppButton mode="text" onPress={() => setPickingDate(true)}>
             Elegir fecha
           </AppButton>

@@ -17,4 +17,16 @@ export class UserRemoteDataSource implements UserDataSource {
   updateUser(id: string, changes: Row) {
     return this.client.update(Tables.appUsers, id, changes);
   }
+
+  readSkills(filters?: Record<string, string>) {
+    return this.client.read(Tables.userSkills, filters);
+  }
+
+  insertSkill(row: Row) {
+    return this.client.insert(Tables.userSkills, row);
+  }
+
+  deleteSkill(id: string) {
+    return this.client.delete(Tables.userSkills, id);
+  }
 }

@@ -28,7 +28,7 @@ export function SectionHeader({ title, trailing, size = "large" }: { title: stri
   const theme = useAppTheme();
   return (
     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-      <T v={size === "large" ? "titleLarge" : "titleMedium"} w={700}>
+      <T v={size === "large" ? "titleLarge" : "titleMedium"} w={700} accessibilityRole="header">
         {title}
       </T>
       {trailing != null && (

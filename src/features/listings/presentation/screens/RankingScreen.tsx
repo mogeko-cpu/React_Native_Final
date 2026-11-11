@@ -4,7 +4,8 @@ import { FlatList, RefreshControl, View } from "react-native";
 
 import { EmptyState } from "@/src/core/components/EmptyState";
 import { GradientHeader } from "@/src/core/components/GradientHeader";
-import { Loading, Screen } from "@/src/core/components/Screen";
+import { Screen } from "@/src/core/components/Screen";
+import { Skeleton } from "@/src/core/components/Skeleton";
 import { T } from "@/src/core/components/T";
 import { useReturnRefresh } from "@/src/core/hooks/useReturnRefresh";
 import { brand, useAppTheme } from "@/src/theme/theme";
@@ -18,7 +19,7 @@ export default function RankingScreen() {
   const vm = useRankingViewModel();
   useReturnRefresh(() => vm.load(true));
 
-  if (vm.isLoading) return <Screen><Loading /></Screen>;
+  if (vm.isLoading) return <Screen><Skeleton /></Screen>;
   if (vm.error) {
     return (
       <Screen>

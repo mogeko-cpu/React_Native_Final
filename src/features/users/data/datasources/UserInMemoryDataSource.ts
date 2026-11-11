@@ -18,4 +18,19 @@ export class UserInMemoryDataSource implements UserDataSource {
   async updateUser(id: string, changes: Row) {
     this.data.tables.update(Tables.appUsers, id, changes);
   }
+
+  async readSkills(filters?: Record<string, string>) {
+    await this.data.tables.wait();
+    return this.data.tables.read(Tables.userSkills, filters);
+  }
+
+  async insertSkill(row: Row) {
+    await this.data.tables.wait();
+    return this.data.tables.insert(Tables.userSkills, row);
+  }
+
+  async deleteSkill(id: string) {
+    await this.data.tables.wait();
+    this.data.tables.delete(Tables.userSkills, id);
+  }
 }

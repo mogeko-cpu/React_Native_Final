@@ -13,8 +13,9 @@ export function NotificationBell({ color }: { color?: string }) {
   return (
     <View>
       <IconButton
+        hitSlop={6}
         testID="notification-bell"
-        accessibilityLabel="Notificaciones"
+        accessibilityLabel={count > 0 ? `Notificaciones, ${count} sin leer` : "Notificaciones"}
         icon="bell-outline"
         iconColor={color}
         size={22}

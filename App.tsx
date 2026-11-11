@@ -6,9 +6,10 @@ import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
+import { View } from "react-native";
 import { PaperProvider } from "react-native-paper";
 import { es, registerTranslation } from "react-native-paper-dates";
-import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-context";
+import { initialWindowMetrics, SafeAreaInsetsContext, SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Container } from "./src/core/di/container";
 import { DIProvider } from "./src/core/di/DIProvider";
@@ -20,6 +21,9 @@ import { MissingConfigScreen } from "./src/core/roble/MissingConfigScreen";
 import { missingRobleConfig, useLocalData } from "./src/core/roble/robleConfig";
 import { SessionProvider, useSession } from "./src/features/auth/presentation/context/SessionContext";
 import { NotificationCenterProvider } from "./src/features/notifications/presentation/context/NotificationCenter";
+import { OfflineBanner } from "./src/core/components/OfflineBanner";
+import { useIsOffline } from "./src/core/network/useConnectivity";
+import { linking } from "./src/navigation/linking";
 import { navigationRef } from "./src/navigation/navigationRef";
 import RootNavigator from "./src/navigation/RootNavigator";
 import { ThemePreferenceProvider, useThemePreference } from "./src/theme/ThemePreference";
@@ -107,7 +111,7 @@ function Themed({ container }: { container?: Container }) {
           <DialogProvider>
             <SessionProvider>
               <NotificationCenterProvider>
-                <NavigationContainer ref={navigationRef} theme={navigationTheme}>
+                <NavigationContainer ref={navigationRef} theme={navigationTheme} linking={linking}>
                   <Shell />
                 </NavigationContainer>
               </NotificationCenterProvider>
@@ -121,9 +125,21 @@ function Themed({ container }: { container?: Container }) {
 
 function Shell() {
   const { ready } = useSession();
+  const offline = useIsOffline();
+  const insets = useSafeAreaInsets();
   useEffect(() => {
     if (ready) SplashScreen.hideAsync().catch(() => undefined);
   }, [ready]);
   if (!ready) return null;
-  return <RootNavigator />;
+  return (
+    <View style={{ flex: 1 }}>
+      <OfflineBanner />
+      {/* La franja ya ocupa la muesca: las pantallas no la vuelven a reservar. */}
+      <SafeAreaInsetsContext.Provider value={offline ? { ...insets, top: 0 } : insets}>
+        <View style={{ flex: 1 }}>
+          <RootNavigator />
+        </View>
+      </SafeAreaInsetsContext.Provider>
+    </View>
+  );
 }

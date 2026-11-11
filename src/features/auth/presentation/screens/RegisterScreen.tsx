@@ -12,8 +12,8 @@ import { useAppTheme } from "@/src/theme/theme";
 import { GoogleSignInButton } from "../components/GoogleSignInButton";
 import { useSession } from "../context/SessionContext";
 
-// Crear una cuenta (`signup_page.dart`). Crea la cuenta sin entrar: después se
-// vuelve al login con un aviso.
+// Crear una cuenta (`signup_page.dart`). Crea la cuenta sin entrar y lleva a
+// verificar el correo con el código que manda Roble.
 export default function RegisterScreen() {
   const theme = useAppTheme();
   const navigation = useNavigation();
@@ -42,8 +42,8 @@ export default function RegisterScreen() {
       snackbar("No se pudo registrar", session.error || undefined);
       return;
     }
-    navigation.goBack();
-    snackbar("Cuenta creada", "Ya puedes iniciar sesión con tu correo.");
+    navigation.navigate("VerifyEmail", { email: email.trim() });
+    snackbar("Cuenta creada", "Te enviamos un código para verificar tu correo.");
   };
 
   return (

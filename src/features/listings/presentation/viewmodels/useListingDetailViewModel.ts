@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useInject } from "@/src/core/di/DIProvider";
 import { useErrorState } from "@/src/core/hooks/useErrorState";
 import { TOKENS } from "@/src/core/di/tokens";
+import { projectLink, Sharer, ShareResult } from "@/src/core/platform/Sharer";
 import { messageOf } from "@/src/core/utils/failure";
 import { useCurrentUser } from "@/src/features/auth/presentation/context/SessionContext";
 import { memberIdsOf } from "@/src/features/groups/domain/entities/Group";
@@ -24,13 +25,14 @@ import {
   teamOf,
 } from "../../domain/entities/Listing";
 import { ListingComment } from "../../domain/entities/ListingComment";
-import { emptyStats, ListingStats, ReactionType } from "../../domain/entities/ListingStats";
+import { applyReaction, emptyStats, ListingStats, ReactionType } from "../../domain/entities/ListingStats";
 import { TaskProgress } from "../../domain/entities/ListingTask";
 import { MentorshipRequest } from "../../domain/entities/MentorshipRequest";
 import { EngagementRepository } from "../../domain/repositories/EngagementRepository";
 import { ListingRepository } from "../../domain/repositories/ListingRepository";
 import { MentorshipRepository } from "../../domain/repositories/MentorshipRepository";
 import { ProjectFileRepository } from "../../domain/repositories/ProjectFileRepository";
+import { SavedListingRepository } from "../../domain/repositories/SavedListingRepository";
 import { TaskRepository } from "../../domain/repositories/TaskRepository";
 
 // El detalle de un proyecto (`listing_detail_view_model.dart`): unirse,
@@ -44,6 +46,8 @@ export function useListingDetailViewModel(listingId: string) {
   const files = useInject<ProjectFileRepository>(TOKENS.ProjectFileRepo);
   const mentorships = useInject<MentorshipRepository>(TOKENS.MentorshipRepo);
   const users = useInject<UserRepository>(TOKENS.UserRepo);
+  const saved = useInject<SavedListingRepository>(TOKENS.SavedListingRepo);
+  const sharer = useInject<Sharer>(TOKENS.Sharer);
   const user = useCurrentUser();
 
   const [listing, setListing] = useState<Listing | null>(null);
@@ -53,6 +57,7 @@ export function useListingDetailViewModel(listingId: string) {
   const [progress, setProgress] = useState<TaskProgress | null>(null);
   const [fileCount, setFileCount] = useState<number | null>(null);
   const [mentorshipRequest, setMentorshipRequest] = useState<MentorshipRequest | null>(null);
+  const [isSaved, setSaved] = useState(false);
   const [isLoading, setLoading] = useState(true);
   // Sube con cada carga, para que la bandeja de solicitudes también recargue.
   const [revision, setRevision] = useState(0);
@@ -103,14 +108,23 @@ export function useListingDetailViewModel(listingId: string) {
           return;
         }
         setListing(found);
-        setMyRequest(await repository.getMyRequestForListing(listingId, user.id));
         // Una vista por persona, registrada una vez por visita.
         if (!viewRegistered.current) {
           viewRegistered.current = true;
           await engagement.registerView({ listingId: found.id, groupId: found.groupId, userId: user.id }).catch(() => undefined);
         }
-        setStats(await engagement.getStatsFor(listingId, user.id));
-        setComments(await engagement.getComments(listingId));
+        // Lo demás no depende entre sí: se pide a la vez y la pantalla aparece antes.
+        const [request, counters, savedIds, list] = await Promise.all([
+          repository.getMyRequestForListing(listingId, user.id),
+          engagement.getStatsFor(listingId, user.id),
+          // Si la tabla de guardados aún no existe, el resto del detalle sirve igual.
+          saved.getSavedIds(user.id).catch(() => [] as string[]),
+          engagement.getComments(listingId),
+        ]);
+        setMyRequest(request);
+        setStats(counters);
+        setSaved(savedIds.includes(listingId));
+        setComments(list);
         await loadProgress();
         await loadTeamSpace(found);
         setRevision((r) => r + 1);
@@ -120,7 +134,7 @@ export function useListingDetailViewModel(listingId: string) {
         setLoading(false);
       }
     },
-    [repository, engagement, listingId, user.id, loadProgress, loadTeamSpace, setError],
+    [repository, engagement, saved, listingId, user.id, loadProgress, loadTeamSpace, setError],
   );
 
   useEffect(() => {
@@ -166,21 +180,33 @@ export function useListingDetailViewModel(listingId: string) {
 
   // ── Valorar y comentar ────────────────────────────────────
 
-  const react = async (reaction: ReactionType) => {
+  // Optimista: el contador cambia en el mismo toque y Roble se entera después.
+  // Las escrituras van en fila, cada una con el voto que había antes de ese
+  // toque. Si una falla, se vuelve a leer lo que Roble tiene de verdad.
+  const reacting = useRef<Promise<void>>(Promise.resolve());
+  const statsRef = useRef(stats);
+  useEffect(() => {
+    statsRef.current = stats;
+  }, [stats]);
+
+  const react = (reaction: ReactionType) => {
     const current = listingRef.current;
-    if (!current || working.current) return;
-    working.current = true;
-    setWorking(true);
+    if (!current) return;
+    const before = statsRef.current;
+    const after = applyReaction(before, reaction);
+    statsRef.current = after;
+    setStats(after);
     setError(null);
-    try {
-      await engagement.toggleReaction({ listingId: current.id, groupId: current.groupId, userId: user.id, reaction, current: stats.myReaction });
-      setStats(await engagement.getStatsFor(current.id, user.id));
-    } catch (e) {
-      setError(messageOf(e, "No se pudo registrar tu valoración"));
-    } finally {
-      working.current = false;
-      setWorking(false);
-    }
+    reacting.current = reacting.current.then(async () => {
+      try {
+        await engagement.toggleReaction({ listingId: current.id, groupId: current.groupId, userId: user.id, reaction, current: before.myReaction });
+      } catch (e) {
+        const actual = await engagement.getStatsFor(current.id, user.id).catch(() => before);
+        statsRef.current = actual;
+        setStats(actual);
+        setError(messageOf(e, "No se pudo registrar tu valoración"));
+      }
+    });
   };
 
   const comment = async (body: string): Promise<boolean> => {
@@ -234,6 +260,39 @@ export function useListingDetailViewModel(listingId: string) {
     } finally {
       working.current = false;
       setWorking(false);
+    }
+  };
+
+  // ── Guardar y compartir ───────────────────────────────────
+
+  // También optimista: el marcador cambia al tocar.
+  const toggleSaved = async (): Promise<boolean | null> => {
+    const next = !isSaved;
+    setSaved(next);
+    setError(null);
+    try {
+      if (next) await saved.save(user.id, listingId);
+      else await saved.unsave(user.id, listingId);
+      return next;
+    } catch (e) {
+      setSaved(!next);
+      setError(messageOf(e, next ? "No se pudo guardar el proyecto" : "No se pudo quitar de guardados"));
+      return null;
+    }
+  };
+
+  const share = async (): Promise<ShareResult | null> => {
+    const current = listingRef.current;
+    if (!current) return null;
+    try {
+      return await sharer.share({
+        title: current.title,
+        message: `Mira «${current.title}» en Campus Innovate: ${current.description.length > 120 ? `${current.description.slice(0, 117)}…` : current.description}`,
+        url: projectLink(current.id),
+      });
+    } catch (e) {
+      setError(messageOf(e, "No se pudo compartir el proyecto"));
+      return null;
     }
   };
 
@@ -413,6 +472,9 @@ export function useListingDetailViewModel(listingId: string) {
     canRequestMentorship,
     canCancelMentorship,
     react,
+    isSaved,
+    toggleSaved,
+    share,
     comment,
     canDeleteComment,
     deleteComment,

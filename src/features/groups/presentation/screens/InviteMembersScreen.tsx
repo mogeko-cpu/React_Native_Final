@@ -8,7 +8,8 @@ import { EmptyState } from "@/src/core/components/EmptyState";
 import { Icon } from "@/src/core/components/Icon";
 import { ListTile } from "@/src/core/components/ListTile";
 import { NameAvatar } from "@/src/core/components/NameAvatar";
-import { Loading, Screen } from "@/src/core/components/Screen";
+import { Screen } from "@/src/core/components/Screen";
+import { Skeleton } from "@/src/core/components/Skeleton";
 import { Card } from "@/src/core/components/Surfaces";
 import { T } from "@/src/core/components/T";
 import { useSnackbar } from "@/src/core/feedback/SnackbarProvider";
@@ -30,7 +31,7 @@ export default function InviteMembersScreen() {
   };
 
   const body = () => {
-    if (vm.isLoading) return <Loading />;
+    if (vm.isLoading) return <Skeleton variant="tiles" count={6} />;
     if (vm.error) return <EmptyState icon="alert-circle-outline" title="No se pudo cargar" message={vm.error} />;
     if (vm.candidates.length === 0) {
       return (

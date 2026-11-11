@@ -19,6 +19,8 @@ const UNIQUE: Record<string, string[][]> = {
   app_users: [["user_id"]],
   group_invitations: [["group_id", "invitee_id"]],
   mentorship_requests: [["listing_id"]],
+  user_skills: [["user_id", "skill_key"]],
+  saved_listings: [["user_id", "listing_id"]],
 };
 
 export function newId(): string {

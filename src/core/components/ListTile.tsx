@@ -71,7 +71,7 @@ export function ListTile({
   );
   if (!onPress) return <View testID={testID}>{body}</View>;
   return (
-    <Pressable testID={testID} onPress={onPress} android_ripple={{ color: alpha(theme.colors.onSurface, 0.08) }}>
+    <Pressable testID={testID} onPress={onPress} accessibilityRole="button" android_ripple={{ color: alpha(theme.colors.onSurface, 0.08) }}>
       {body}
     </Pressable>
   );

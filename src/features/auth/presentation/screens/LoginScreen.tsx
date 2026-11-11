@@ -44,8 +44,13 @@ export default function LoginScreen() {
 
   const submit = async () => {
     if (!validate()) return;
-    const loggedIn = await session.login(email, password);
-    if (!loggedIn) snackbar("No se pudo entrar", session.error || undefined);
+    const result = await session.login(email, password);
+    if (result === "unverified") {
+      navigation.navigate("VerifyEmail", { email: email.trim() });
+      snackbar("Falta verificar tu correo", "Escribe el código que te llegó al registrarte.");
+    } else if (result === "failed") {
+      snackbar("No se pudo entrar", session.error || undefined);
+    }
   };
 
   return (
@@ -85,12 +90,15 @@ export default function LoginScreen() {
               onSubmitEditing={submit}
               error={errors.password}
             />
+            <AppButton testID="login-forgot" mode="text" style={{ alignSelf: "flex-end", marginTop: 4 }} onPress={() => navigation.navigate("ForgotPassword", { email: email.trim() })}>
+              ¿Olvidaste tu contraseña?
+            </AppButton>
             {useLocalData && (
               <T v="bodySmall" color={theme.colors.onSurfaceVariant} style={{ marginTop: 10 }}>
                 Modo sin servidor: entra con {DummyData.demoEmail} / {DummyData.demoPassword}
               </T>
             )}
-            <Gap h={28} />
+            <Gap h={20} />
             <AppButton testID="login-submit" big loading={session.isLoading} onPress={submit}>
               Iniciar sesión
             </AppButton>

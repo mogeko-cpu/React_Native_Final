@@ -7,7 +7,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { EmptyState } from "@/src/core/components/EmptyState";
 import { Hero, onHero } from "@/src/core/components/Hero";
 import { Icon } from "@/src/core/components/Icon";
-import { Gap, Loading, Screen, SectionHeader } from "@/src/core/components/Screen";
+import { Gap, Screen, SectionHeader } from "@/src/core/components/Screen";
+import { Skeleton } from "@/src/core/components/Skeleton";
 import { Card } from "@/src/core/components/Surfaces";
 import { T } from "@/src/core/components/T";
 import { useConfirm } from "@/src/core/feedback/DialogProvider";
@@ -54,13 +55,42 @@ export default function HomeScreen() {
           <SectionHeader title="Ideas destacadas" />
           <Gap h={14} />
           {vm.isLoading ? (
-            <Loading padded />
+            <Skeleton padded count={2} />
           ) : vm.error ? (
             <EmptyState inline icon="alert-circle-outline" title="No se pudieron cargar las ideas" message={vm.error} tint={theme.colors.error} />
           ) : vm.featuredListings.length === 0 ? (
             <EmptyState inline icon="lightbulb-outline" title="Todavía no hay ideas con cupos disponibles" />
           ) : (
             vm.featuredListings.map((listing) => <ListingCard key={listing.id} listing={listing} stats={vm.statsOf(listing)} onPress={() => openListing(listing.id)} />)
+          )}
+          {!vm.isLoading && !vm.error && (vm.hasSkills || vm.needsSkills) && (
+            <>
+              <Gap h={24} />
+              <SectionHeader title="Recomendados para ti" />
+              <Gap h={14} />
+              {vm.needsSkills ? (
+                <EmptyState
+                  inline
+                  icon="star-shooting-outline"
+                  title="Cuéntanos qué sabes hacer"
+                  message="Agrega tus habilidades en el Perfil y te mostraremos proyectos que las buscan."
+                  actionLabel="Agregar habilidades"
+                  onAction={() => navigation.navigate("Tabs", { screen: "Profile" })}
+                />
+              ) : vm.recommended.length === 0 ? (
+                <EmptyState inline icon="star-shooting-outline" title="Por ahora ningún proyecto pide tus habilidades" message="Cuando alguien publique uno, aparecerá aquí." />
+              ) : (
+                vm.recommended.map(({ listing, matched }) => (
+                  <ListingCard
+                    key={listing.id}
+                    listing={listing}
+                    stats={vm.statsOf(listing)}
+                    note={`Coincide en ${matched.join(", ")}`}
+                    onPress={() => openListing(listing.id)}
+                  />
+                ))
+              )}
+            </>
           )}
           {vm.mentorshipRequests.length > 0 && (
             <>
@@ -98,7 +128,7 @@ function Greeting({ name, onLogOut }: { name: string; onLogOut: () => void }) {
           CAMPUS INNOVATE
         </T>
         <NotificationBell color={on} />
-        <IconButton testID="home-logout" accessibilityLabel="Cerrar sesión" icon="logout" iconColor={on} size={20} style={{ margin: 0 }} onPress={onLogOut} />
+        <IconButton hitSlop={6} testID="home-logout" accessibilityLabel="Cerrar sesión" icon="logout" iconColor={on} size={20} style={{ margin: 0 }} onPress={onLogOut} />
       </View>
       <T v="headlineSmall" w={700} color={on} style={{ marginTop: 18 }}>
         {`Hola, ${name}`}

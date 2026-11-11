@@ -1,7 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { Row } from "@/src/core/roble/guard";
-import { robleConfig } from "@/src/core/roble/robleConfig";
 import { RobleClient } from "@/src/core/roble/RobleClient";
 import { AuthDataSource } from "./AuthDataSource";
 
@@ -44,12 +43,28 @@ export class AuthRemoteDataSource implements AuthDataSource {
   }
 
   async signUp(name: string, email: string, password: string) {
-    // `signup-direct`: la cuenta queda activa sin código por correo.
-    await this.client.db.register({ email, password, name, autoLogin: false });
+    // `signup`: Roble manda un código de 6 dígitos y la cuenta espera por él.
+    await this.client.db.registerWithVerification({ email, password, name });
   }
 
-  async startSocialLogin(provider: string) {
-    const { url } = await this.client.startSocialLogin(provider, robleConfig.socialRedirect);
+  async verifyEmail(email: string, code: string) {
+    await this.client.db.verifyEmail({ email, code });
+  }
+
+  async resendCode(email: string) {
+    await this.client.db.resendCode({ email });
+  }
+
+  async forgotPassword(email: string) {
+    await this.client.db.forgotPassword({ email });
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    await this.client.db.resetPassword({ token, newPassword });
+  }
+
+  async startSocialLogin(provider: string, redirect: string) {
+    const { url } = await this.client.startSocialLogin(provider, redirect);
     return url;
   }
 
@@ -64,6 +79,7 @@ export class AuthRemoteDataSource implements AuthDataSource {
       await this.client.db.logout();
     } finally {
       await AsyncStorage.removeItem(USER_KEY).catch(() => undefined);
+      await this.client.clearCache();
     }
   }
 

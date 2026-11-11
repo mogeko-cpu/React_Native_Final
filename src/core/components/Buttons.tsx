@@ -23,6 +23,8 @@ export function AppButton({
   textColor,
   children,
   testID,
+  accessibilityLabel,
+  accessibilityState,
 }: {
   mode?: Mode;
   icon?: IconName;
@@ -35,12 +37,17 @@ export function AppButton({
   textColor?: string;
   children: React.ReactNode;
   testID?: string;
+  accessibilityLabel?: string;
+  accessibilityState?: { selected?: boolean };
 }) {
   const theme = useAppTheme();
-  const height = big ? 52 : tall ? 48 : 40;
+  // 44 como mínimo: el objetivo táctil que piden las pautas de accesibilidad.
+  const height = big ? 52 : tall ? 48 : 44;
   return (
     <Button
       testID={testID}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={accessibilityState}
       mode={PAPER_MODE[mode]}
       icon={loading ? undefined : icon}
       onPress={onPress}
@@ -61,6 +68,7 @@ export function FilledIconButton({ icon, onPress, disabled, testID, accessibilit
   const theme = useAppTheme();
   return (
     <IconButton
+      hitSlop={6}
       testID={testID}
       accessibilityLabel={accessibilityLabel}
       icon={icon}

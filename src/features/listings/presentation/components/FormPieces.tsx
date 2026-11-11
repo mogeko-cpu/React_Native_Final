@@ -42,7 +42,19 @@ export function TeamSizeSlider({ value, min, max, onChange }: { value: number; m
 }
 
 // «Habilidades que buscas»: campo, botón + y los chips que se pueden quitar.
-export function SkillsEditor({ skills, onAdd, onRemove, placeholder }: { skills: string[]; onAdd: (skill: string) => void; onRemove: (skill: string) => void; placeholder: string }) {
+export function SkillsEditor({
+  skills,
+  onAdd,
+  onRemove,
+  placeholder,
+  testID = "skill",
+}: {
+  skills: string[];
+  onAdd: (skill: string) => void;
+  onRemove: (skill: string) => void;
+  placeholder: string;
+  testID?: string;
+}) {
   const [text, setText] = useState("");
   const add = () => {
     onAdd(text);
@@ -52,10 +64,10 @@ export function SkillsEditor({ skills, onAdd, onRemove, placeholder }: { skills:
     <View>
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <View style={{ flex: 1 }}>
-          <AppTextField testID="skill-input" placeholder={placeholder} value={text} onChangeText={setText} onSubmitEditing={add} returnKeyType="done" blurOnSubmit={false} />
+          <AppTextField testID={`${testID}-input`} placeholder={placeholder} value={text} onChangeText={setText} onSubmitEditing={add} returnKeyType="done" blurOnSubmit={false} />
         </View>
         <View style={{ marginLeft: 8 }}>
-          <FilledIconButton testID="skill-add" accessibilityLabel="Agregar habilidad" icon="plus" onPress={add} />
+          <FilledIconButton testID={`${testID}-add`} accessibilityLabel="Agregar habilidad" icon="plus" onPress={add} />
         </View>
       </View>
       {skills.length > 0 && (

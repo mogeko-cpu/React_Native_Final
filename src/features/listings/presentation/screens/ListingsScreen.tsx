@@ -6,7 +6,8 @@ import { AppTextField } from "@/src/core/components/AppTextField";
 import { ChoiceChip } from "@/src/core/components/Chips";
 import { EmptyState } from "@/src/core/components/EmptyState";
 import { ExtendedFab } from "@/src/core/components/Fab";
-import { Loading, Screen } from "@/src/core/components/Screen";
+import { Screen } from "@/src/core/components/Screen";
+import { Skeleton } from "@/src/core/components/Skeleton";
 import { useReturnRefresh } from "@/src/core/hooks/useReturnRefresh";
 import { useAppTheme } from "@/src/theme/theme";
 import { LISTING_STATUSES, statusLabel } from "../../domain/entities/Listing";
@@ -24,7 +25,7 @@ export default function ListingsScreen() {
   useReturnRefresh(() => vm.load(true));
 
   const body = () => {
-    if (vm.isLoading) return <Loading />;
+    if (vm.isLoading) return <Skeleton />;
     if (vm.error) return <EmptyState icon="alert-circle-outline" title="No se pudieron cargar los proyectos" message={vm.error} />;
     if (vm.listings.length === 0) {
       return <EmptyState icon="magnify-close" title="Ningún proyecto coincide" message="Prueba con otra categoría o con otro término de búsqueda." />;

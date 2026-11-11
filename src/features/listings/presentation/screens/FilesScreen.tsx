@@ -5,10 +5,11 @@ import { LinearProgress } from "@/src/core/components/LinearProgress";
 
 import { AppButton } from "@/src/core/components/Buttons";
 import { EmptyState } from "@/src/core/components/EmptyState";
-import { Gap, Loading, Screen } from "@/src/core/components/Screen";
+import { Gap, Screen } from "@/src/core/components/Screen";
+import { Skeleton } from "@/src/core/components/Skeleton";
 import { Panel } from "@/src/core/components/Surfaces";
 import { T } from "@/src/core/components/T";
-import { useConfirm } from "@/src/core/feedback/DialogProvider";
+import { useUndo } from "@/src/core/feedback/useUndo";
 import { useSnackbar } from "@/src/core/feedback/SnackbarProvider";
 import { RootStackParamList } from "@/src/navigation/types";
 import { useAppTheme } from "@/src/theme/theme";
@@ -27,7 +28,7 @@ export default function FilesScreen() {
   const navigation = useNavigation();
   const { listingId } = useRoute<RouteProp<RootStackParamList, "Files">>().params;
   const vm = useFilesViewModel(listingId);
-  const confirm = useConfirm();
+  const undo = useUndo();
   const snackbar = useSnackbar();
   const [linkDialog, setLinkDialog] = useState(false);
 
@@ -52,12 +53,20 @@ export default function FilesScreen() {
     if (!(await vm.open(file))) snackbar("No se pudo abrir", vm.lastActionError() ?? "Intenta de nuevo");
   };
 
-  const remove = async (file: ProjectFile) => {
-    const ok = await confirm({ title: `¿Eliminar "${file.name}"?`, message: "Nadie del equipo lo va a poder abrir de nuevo.", confirmLabel: "Eliminar" });
-    if (ok && !(await vm.remove(file))) snackbar("No se pudo eliminar", vm.lastActionError() ?? "Intenta de nuevo");
-  };
+  // Sin diálogo: se quita al instante y el aviso ofrece «Deshacer» unos
+  // segundos antes de borrarlo de verdad.
+  const remove = (file: ProjectFile) =>
+    undo({
+      key: `file-${file.id}`,
+      title: "Archivo quitado",
+      message: `"${file.name}" ya no está en la carpeta`,
+      hide: () => vm.hide(file.id),
+      restore: () => vm.unhide(file.id),
+      commit: () => vm.commitRemove(file),
+      errorTitle: "No se pudo eliminar",
+    });
 
-  if (vm.isLoading) return <Screen><Loading /></Screen>;
+  if (vm.isLoading) return <Screen><Skeleton variant="tiles" count={4} /></Screen>;
   if (vm.error || !vm.listing) {
     return (
       <Screen>

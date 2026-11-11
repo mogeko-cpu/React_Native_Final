@@ -31,6 +31,7 @@ export function Card({
   color,
   radius = 18,
   testID,
+  accessibilityLabel,
 }: {
   children: React.ReactNode;
   onPress?: () => void;
@@ -38,6 +39,8 @@ export function Card({
   color?: string;
   radius?: number;
   testID?: string;
+  // Lo que lee el lector de pantalla al llegar a la tarjeta.
+  accessibilityLabel?: string;
 }) {
   const theme = useAppTheme();
   const base = [raisedStyle(theme, radius), { shadowColor: theme.colors.cardShadow, shadowOpacity: theme.dark ? 0.5 : 0.35, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }, color ? { backgroundColor: color } : null, { marginBottom: 14 }, style];
@@ -53,6 +56,8 @@ export function Card({
       <Pressable
         testID={testID}
         onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
         android_ripple={{ color: alpha(theme.colors.onSurface, 0.08) }}
         style={({ pressed }) => [{ borderRadius: radius, overflow: "hidden" }, pressed && Platform.OS !== "android" && { opacity: 0.85 }]}
       >

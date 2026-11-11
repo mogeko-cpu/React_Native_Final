@@ -1,10 +1,12 @@
-import { guardRoble, isDuplicateRow, nowIso, Row, str, translateRobleError } from "@/src/core/roble/guard";
+import { byDateAsc, guardRoble, isDuplicateRow, nowIso, Row, str, translateRobleError } from "@/src/core/roble/guard";
 import { UserFacingError } from "@/src/core/utils/failure";
 import { DirectoryUser } from "../../domain/entities/DirectoryUser";
 import { UserRepository } from "../../domain/repositories/UserRepository";
+import { cleanSkill, MAX_SKILLS, skillKey } from "../../domain/skills";
 import { UserDataSource } from "../datasources/UserDataSource";
 
 const failure = (message: string) => new UserFacingError(message);
+const MISSING_TABLE = "Falta la tabla user_skills en Roble: córrela desde docs/sql/2026_habilidades_y_guardados.sql.";
 
 export class UserRepositoryImpl implements UserRepository {
   constructor(private readonly source: UserDataSource) {}
@@ -35,6 +37,34 @@ export class UserRepositoryImpl implements UserRepository {
       .map(toUser)
       .filter((u): u is DirectoryUser => u != null)
       .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+  }
+
+  async getSkills(userId: string): Promise<string[]> {
+    const rows = await guardRoble(() => this.source.readSkills({ user_id: userId }), failure, { notFound: MISSING_TABLE });
+    return rows.sort(byDateAsc("created_at")).map((r) => str(r.skill)).filter(Boolean);
+  }
+
+  async addSkill(userId: string, skill: string): Promise<void> {
+    const clean = cleanSkill(skill);
+    if (!clean) throw failure("Escribe la habilidad.");
+    const rows = await guardRoble(() => this.source.readSkills({ user_id: userId }), failure, { notFound: MISSING_TABLE });
+    if (rows.some((r) => str(r.skill_key) === skillKey(clean))) return;
+    if (rows.length >= MAX_SKILLS) throw failure(`Puedes tener hasta ${MAX_SKILLS} habilidades.`);
+    try {
+      await this.source.insertSkill({ user_id: userId, skill: clean, skill_key: skillKey(clean), created_at: nowIso() });
+    } catch (e) {
+      // Ya estaba (otra pestaña la agregó primero): es lo que se quería.
+      if (isDuplicateRow(e)) return;
+      throw translateRobleError(e, failure, { notFound: MISSING_TABLE });
+    }
+  }
+
+  async removeSkill(userId: string, skill: string): Promise<void> {
+    const rows = await guardRoble(() => this.source.readSkills({ user_id: userId, skill_key: skillKey(skill) }), failure, { notFound: MISSING_TABLE });
+    for (const row of rows) {
+      const id = str(row._id);
+      if (id) await guardRoble(() => this.source.deleteSkill(id), failure);
+    }
   }
 }
 

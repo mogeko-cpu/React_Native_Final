@@ -3,7 +3,8 @@ import { Tables } from "../roble/tables";
 import { LocalTables, newId } from "./LocalTables";
 
 // Una cuenta de la app en memoria.
-export type LocalAccount = { userId: string; name: string; email: string; password: string };
+// `verified: false` es una cuenta recién creada que espera su código.
+export type LocalAccount = { userId: string; name: string; email: string; password: string; verified?: boolean };
 
 // Los datos de demostración de la app sin servidor: un campus pequeño con
 // grupos, proyectos en distintos estados, un tablero, comentarios,
@@ -19,6 +20,11 @@ export class DummyData {
   // La cuenta con la que se entra a la app local.
   static readonly demoEmail = "mariana@uninorte.edu.co";
   static readonly demoPassword = "Campus123!";
+  // El código que «llega al correo» en la app sin servidor, para verificar la
+  // cuenta y para restablecer la contraseña.
+  static readonly demoCode = "123456";
+  // Los correos que pidieron restablecer la contraseña y aún no lo hacen.
+  readonly resetRequests = new Set<string>();
 
   constructor(seed = true) {
     if (seed) this.seed();
@@ -182,6 +188,13 @@ export class DummyData {
     );
 
     // ── Tablero de la plataforma de tutorías ──
+    // ── Habilidades y guardados (los flujos nuevos) ──
+    for (const [skill, days] of [["Python", 20], ["Diseño UI", 19], ["Estadística", 18]] as const) {
+      t.insert(Tables.userSkills, { user_id: mariana.userId, skill, skill_key: skill.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""), created_at: ago(days * DAY) });
+    }
+    t.insert(Tables.userSkills, { user_id: camila.userId, skill: "Ventas", skill_key: "ventas", created_at: ago(15 * DAY) });
+    t.insert(Tables.savedListings, { user_id: mariana.userId, listing_id: mercado._id, saved_at: ago(2 * DAY) });
+
     const task = (title: string, assignee: LocalAccount | null, status: string, due: string | null, days: number) =>
       t.insert(Tables.listingTasks, {
         listing_id: tutorias._id,

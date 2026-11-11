@@ -5,7 +5,10 @@ import { View } from "react-native";
 
 import { useSession } from "@/src/features/auth/presentation/context/SessionContext";
 import LoginScreen from "@/src/features/auth/presentation/screens/LoginScreen";
+import ForgotPasswordScreen from "@/src/features/auth/presentation/screens/ForgotPasswordScreen";
 import RegisterScreen from "@/src/features/auth/presentation/screens/RegisterScreen";
+import ResetPasswordScreen from "@/src/features/auth/presentation/screens/ResetPasswordScreen";
+import VerifyEmailScreen from "@/src/features/auth/presentation/screens/VerifyEmailScreen";
 import CreateGroupScreen from "@/src/features/groups/presentation/screens/CreateGroupScreen";
 import GroupChatScreen from "@/src/features/groups/presentation/screens/GroupChatScreen";
 import GroupDetailScreen from "@/src/features/groups/presentation/screens/GroupDetailScreen";
@@ -69,11 +72,14 @@ export default function RootNavigator() {
         <>
           <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Register" component={RegisterScreen} options={{ title: "Crear cuenta" }} />
+          <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} options={{ title: "Verificar correo" }} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ title: "Recuperar contraseña" }} />
+          <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} options={{ title: "Contraseña nueva" }} />
         </>
       ) : (
         <>
           <Stack.Screen name="Tabs" component={Tabs} options={{ headerShown: false }} />
-          <Stack.Screen name="ListingDetail" component={ListingDetailScreen} options={{ title: "Detalle del proyecto" }} />
+          <Stack.Screen name="ListingDetail" component={ListingDetailScreen} options={{ title: "Proyecto" }} />
           <Stack.Screen name="CreateListing" component={CreateListingScreen} options={{ title: "Publicar idea" }} />
           <Stack.Screen name="EditListing" component={EditListingScreen} options={{ title: "Editar proyecto" }} />
           <Stack.Screen name="JoinRequest" component={JoinRequestScreen} options={{ title: "Solicitar unirme" }} />

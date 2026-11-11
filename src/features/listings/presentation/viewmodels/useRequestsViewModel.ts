@@ -18,6 +18,9 @@ export function useRequestsViewModel() {
   const [isLoading, setLoading] = useState(false);
   const [error, setError, lastError] = useErrorState();
   const [target, setTarget] = useState({ listingId: "", listingTitle: "" });
+  // Las que se rechazaron con «Deshacer» todavía disponible: no se muestran,
+  // pero Roble aún no se ha enterado.
+  const [hidden, setHidden] = useState<ReadonlySet<string>>(new Set());
 
   const load = useCallback(
     async (listingId: string, listingTitle: string) => {
@@ -57,14 +60,42 @@ export function useRequestsViewModel() {
     }
   };
 
+  const hide = useCallback((id: string) => setHidden((set) => new Set(set).add(id)), []);
+  const unhide = useCallback(
+    (id: string) =>
+      setHidden((set) => {
+        const next = new Set(set);
+        next.delete(id);
+        return next;
+      }),
+    [],
+  );
+
+  // El rechazo de verdad, cuando pasó el tiempo de deshacer. Lanza si falla,
+  // para que el aviso de deshacer vuelva a mostrar la solicitud.
+  const commitReject = async (requestId: string) => {
+    const request = requests.find((r) => r.id === requestId);
+    await repository.rejectJoinRequest(requestId);
+    setRequests((list) => list.map((r) => (r.id === requestId ? { ...r, status: "rejected" } : r)));
+    unhide(requestId);
+    if (request) {
+      await notifier
+        .requestResolved({ accepted: false, target: "listing", targetId: target.listingId, targetName: target.listingTitle, deciderId: user.id, applicantId: request.applicantId })
+        .catch(() => undefined);
+    }
+  };
+
   return {
     requests,
-    pending: requests.filter((r) => r.status === "pending"),
+    pending: requests.filter((r) => r.status === "pending" && !hidden.has(r.id)),
     isLoading,
     error,
     lastError,
     load,
     accept: (requestId: string) => resolve(requestId, "accepted"),
     reject: (requestId: string) => resolve(requestId, "rejected"),
+    hide,
+    unhide,
+    commitReject,
   };
 }

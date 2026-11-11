@@ -15,6 +15,10 @@ export const robleConfig = {
   // consola de Roble. Nunca una URL: así ninguna compilación puede mandar a
   // nadie a un destino que el dueño del proyecto no aprobó.
   socialRedirect: process.env.EXPO_PUBLIC_ROBLE_SOCIAL_REDIRECT || "default",
+  // El destino del teléfono (`campusinnovate://auth`). Hay que registrarlo en
+  // la consola con este nombre para que «Continuar con Google» sirva fuera
+  // de la web.
+  socialRedirectMobile: process.env.EXPO_PUBLIC_ROBLE_SOCIAL_REDIRECT_MOBILE || "mobile",
 };
 
 // `EXPO_PUBLIC_DATA_SOURCE=local` arranca con los datos en memoria

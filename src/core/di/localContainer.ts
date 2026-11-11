@@ -14,6 +14,8 @@ import { EngagementRepositoryImpl } from "@/src/features/listings/data/repositor
 import { ListingRepositoryImpl } from "@/src/features/listings/data/repositories/ListingRepositoryImpl";
 import { MentorshipRepositoryImpl } from "@/src/features/listings/data/repositories/MentorshipRepositoryImpl";
 import { ProjectFileRepositoryImpl } from "@/src/features/listings/data/repositories/ProjectFileRepositoryImpl";
+import { SavedListingInMemoryDataSource } from "@/src/features/listings/data/datasources/SavedListingInMemoryDataSource";
+import { SavedListingRepositoryImpl } from "@/src/features/listings/data/repositories/SavedListingRepositoryImpl";
 import { TaskRepositoryImpl } from "@/src/features/listings/data/repositories/TaskRepositoryImpl";
 import { NotificationInMemoryDataSource } from "@/src/features/notifications/data/datasources/NotificationInMemoryDataSource";
 import { NotificationRepositoryImpl } from "@/src/features/notifications/data/repositories/NotificationRepositoryImpl";
@@ -22,6 +24,7 @@ import { UserInMemoryDataSource } from "@/src/features/users/data/datasources/Us
 import { UserRepositoryImpl } from "@/src/features/users/data/repositories/UserRepositoryImpl";
 import { SystemFilePicker } from "../platform/FilePicker";
 import { SystemLinkOpener } from "../platform/LinkOpener";
+import { SystemSharer } from "../platform/Sharer";
 import { DummyData } from "../data/dummyData";
 import { Container } from "./container";
 import { TOKENS } from "./tokens";
@@ -46,10 +49,12 @@ export function createLocalContainer(data: DummyData = new DummyData()): Contain
       new ProjectFileRepositoryImpl(new ProjectFileInMemoryDataSource(data), new FileStorageInMemoryDataSource(data), listings),
     )
     .register(TOKENS.MentorshipRepo, new MentorshipRepositoryImpl(new MentorshipInMemoryDataSource(data), listings))
+    .register(TOKENS.SavedListingRepo, new SavedListingRepositoryImpl(new SavedListingInMemoryDataSource(data), listings))
     .register(TOKENS.GroupRepo, groups)
     .register(TOKENS.GroupChatRepo, new GroupChatRepositoryImpl(new GroupChatInMemoryDataSource(data), groups))
     .register(TOKENS.NotificationRepo, notifications)
     .register(TOKENS.NotificationPublisher, new NotificationPublisher(notifications))
     .register(TOKENS.FilePicker, new SystemFilePicker())
-    .register(TOKENS.LinkOpener, new SystemLinkOpener());
+    .register(TOKENS.LinkOpener, new SystemLinkOpener())
+    .register(TOKENS.Sharer, new SystemSharer());
 }

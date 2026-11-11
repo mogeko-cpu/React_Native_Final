@@ -12,13 +12,15 @@ import { ListingStats, ReactionType } from "../../domain/entities/ListingStats";
 const NATIVE_DRIVER = Platform.OS !== "web";
 
 // Valorar un proyecto (`reaction_bar.dart`): me gusta / no me gusta, con un
-// pequeño salto al elegir, y las vistas y comentarios al lado.
+// pequeño salto al elegir, y las vistas y comentarios al lado. El contador
+// cambia al instante: el view model escribe en Roble después.
 export function ReactionBar({ stats, onReact, isBusy }: { stats: ListingStats; onReact: (reaction: ReactionType) => void; isBusy?: boolean }) {
   const theme = useAppTheme();
   return (
     <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
       <ReactionButton
         testID="react-like"
+        label="Me gusta"
         icon="thumb-up-outline"
         selectedIcon="thumb-up"
         count={stats.likes}
@@ -27,6 +29,7 @@ export function ReactionBar({ stats, onReact, isBusy }: { stats: ListingStats; o
       />
       <ReactionButton
         testID="react-dislike"
+        label="No me gusta"
         icon="thumb-down-outline"
         selectedIcon="thumb-down"
         count={stats.dislikes}
@@ -39,7 +42,23 @@ export function ReactionBar({ stats, onReact, isBusy }: { stats: ListingStats; o
   );
 }
 
-function ReactionButton({ icon, selectedIcon, count, selected, onPress, testID }: { icon: IconName; selectedIcon: IconName; count: number; selected: boolean; onPress?: () => void; testID: string }) {
+function ReactionButton({
+  icon,
+  selectedIcon,
+  count,
+  selected,
+  onPress,
+  testID,
+  label,
+}: {
+  icon: IconName;
+  selectedIcon: IconName;
+  count: number;
+  selected: boolean;
+  onPress?: () => void;
+  testID: string;
+  label: string;
+}) {
   const theme = useAppTheme();
   const [scale] = useState(() => new Animated.Value(1));
   const was = useRef(selected);
@@ -56,6 +75,8 @@ function ReactionButton({ icon, selectedIcon, count, selected, onPress, testID }
     <Animated.View style={{ transform: [{ scale }] }}>
       <AppButton
         testID={testID}
+        accessibilityLabel={`${label}, ${count}`}
+        accessibilityState={{ selected }}
         mode={selected ? "tonal" : "outlined"}
         icon={selected ? selectedIcon : icon}
         textColor={selected ? undefined : theme.colors.onSurfaceVariant}

@@ -8,10 +8,12 @@ export const TOKENS = {
   TaskRepo: Symbol("TaskRepository"),
   ProjectFileRepo: Symbol("ProjectFileRepository"),
   MentorshipRepo: Symbol("MentorshipRepository"),
+  SavedListingRepo: Symbol("SavedListingRepository"),
   GroupRepo: Symbol("GroupRepository"),
   GroupChatRepo: Symbol("GroupChatRepository"),
   NotificationRepo: Symbol("NotificationRepository"),
   NotificationPublisher: Symbol("NotificationPublisher"),
   FilePicker: Symbol("FilePicker"),
   LinkOpener: Symbol("LinkOpener"),
+  Sharer: Symbol("Sharer"),
 } as const;

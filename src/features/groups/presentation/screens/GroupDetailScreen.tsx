@@ -10,7 +10,8 @@ import { EmptyState } from "@/src/core/components/EmptyState";
 import { Icon } from "@/src/core/components/Icon";
 import { ListTile } from "@/src/core/components/ListTile";
 import { IconAvatar, NameAvatar } from "@/src/core/components/NameAvatar";
-import { Gap, Loading, Screen, SectionHeader } from "@/src/core/components/Screen";
+import { Gap, Screen, SectionHeader } from "@/src/core/components/Screen";
+import { Skeleton } from "@/src/core/components/Skeleton";
 import { Card, InfoBanner } from "@/src/core/components/Surfaces";
 import { T } from "@/src/core/components/T";
 import { useConfirm } from "@/src/core/feedback/DialogProvider";
@@ -55,7 +56,7 @@ export default function GroupDetailScreen() {
     navigation.setOptions({
       headerRight: () =>
         vm.isOwner ? (
-          <IconButton testID="group-delete" accessibilityLabel="Eliminar grupo" icon="delete-outline" iconColor={theme.colors.onAppBar} disabled={vm.isWorking} onPress={confirmDelete} />
+          <IconButton hitSlop={6} testID="group-delete" accessibilityLabel="Eliminar grupo" icon="delete-outline" iconColor={theme.colors.onAppBar} disabled={vm.isWorking} onPress={confirmDelete} />
         ) : null,
     });
   });
@@ -74,7 +75,7 @@ export default function GroupDetailScreen() {
     else toast("Error", vm.lastError() ?? "No se pudo enviar");
   };
 
-  if (vm.isLoading) return <Screen><Loading /></Screen>;
+  if (vm.isLoading) return <Screen><Skeleton variant="detail" /></Screen>;
   const group = vm.group;
   if (!group) {
     return (
@@ -152,6 +153,7 @@ export default function GroupDetailScreen() {
               trailing={
                 vm.isOwner && !isOwner(group, member.userId) && !vm.isWorking ? (
                   <IconButton
+                    hitSlop={6}
                     accessibilityLabel="Quitar del grupo"
                     icon="account-remove-outline"
                     onPress={async () => {
@@ -225,6 +227,7 @@ export default function GroupDetailScreen() {
                   trailing={
                     vm.canCancel(invitation) ? (
                       <IconButton
+                        hitSlop={6}
                         accessibilityLabel="Cancelar invitación"
                         icon="close"
                         disabled={vm.isWorking}

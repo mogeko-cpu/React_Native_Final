@@ -10,7 +10,8 @@ import { ExtendedFab } from "@/src/core/components/Fab";
 import { Hero, onHero } from "@/src/core/components/Hero";
 import { Icon } from "@/src/core/components/Icon";
 import { NameAvatar } from "@/src/core/components/NameAvatar";
-import { Loading, Screen } from "@/src/core/components/Screen";
+import { Screen } from "@/src/core/components/Screen";
+import { Skeleton } from "@/src/core/components/Skeleton";
 import { Card, InfoBanner } from "@/src/core/components/Surfaces";
 import { T } from "@/src/core/components/T";
 import { useConfirm } from "@/src/core/feedback/DialogProvider";
@@ -92,7 +93,7 @@ export default function TasksScreen() {
     if (ok && !(await vm.remove(task))) failed("No se pudo eliminar");
   };
 
-  if (vm.isLoading) return <Screen><Loading /></Screen>;
+  if (vm.isLoading) return <Screen><Skeleton variant="tiles" count={5} /></Screen>;
   if (vm.error || !vm.listing) {
     return (
       <Screen>
@@ -252,7 +253,7 @@ function TaskCard({
                 visible={menu}
                 onDismiss={() => setMenu(false)}
                 contentStyle={{ backgroundColor: theme.colors.raised, borderRadius: 14 }}
-                anchor={<IconButton testID={`task-menu-${task.id}`} accessibilityLabel="Opciones de la tarea" icon="dots-vertical" size={20} style={{ margin: 0 }} disabled={isLocked} onPress={() => setMenu(true)} />}
+                anchor={<IconButton hitSlop={6} testID={`task-menu-${task.id}`} accessibilityLabel="Opciones de la tarea" icon="dots-vertical" size={20} style={{ margin: 0 }} disabled={isLocked} onPress={() => setMenu(true)} />}
               >
                 <Menu.Item title="Editar" onPress={pick(onEdit)} />
                 {task.column === "cancelled" ? <Menu.Item title="Reabrir tarea" onPress={pick(onReopen)} /> : <Menu.Item title="Cancelar tarea" onPress={pick(onCancel)} />}
@@ -291,9 +292,9 @@ function TaskCard({
               ) : (
                 <>
                   {previous && (
-                    <IconButton testID={`task-back-${task.id}`} accessibilityLabel={`Mover a ${columnLabel(previous)}`} icon="arrow-left" disabled={isLocked} onPress={() => onMove(previous)} />
+                    <IconButton hitSlop={6} testID={`task-back-${task.id}`} accessibilityLabel={`Mover a ${columnLabel(previous)}`} icon="arrow-left" disabled={isLocked} onPress={() => onMove(previous)} />
                   )}
-                  {next && <IconButton testID={`task-next-${task.id}`} accessibilityLabel={`Mover a ${columnLabel(next)}`} icon="arrow-right" disabled={isLocked} onPress={() => onMove(next)} />}
+                  {next && <IconButton hitSlop={6} testID={`task-next-${task.id}`} accessibilityLabel={`Mover a ${columnLabel(next)}`} icon="arrow-right" disabled={isLocked} onPress={() => onMove(next)} />}
                 </>
               )}
             </View>

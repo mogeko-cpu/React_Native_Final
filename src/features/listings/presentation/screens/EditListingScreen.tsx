@@ -6,7 +6,8 @@ import { AppTextField } from "@/src/core/components/AppTextField";
 import { AppButton } from "@/src/core/components/Buttons";
 import { ChoiceChip, Wrap } from "@/src/core/components/Chips";
 import { EmptyState } from "@/src/core/components/EmptyState";
-import { Gap, Loading, Screen } from "@/src/core/components/Screen";
+import { Gap, Screen } from "@/src/core/components/Screen";
+import { Skeleton } from "@/src/core/components/Skeleton";
 import { InfoBanner } from "@/src/core/components/Surfaces";
 import { T } from "@/src/core/components/T";
 import { useSnackbar } from "@/src/core/feedback/SnackbarProvider";
@@ -42,7 +43,7 @@ export default function EditListingScreen() {
     setFilled(true);
   }, [vm.listing, filled]);
 
-  if (vm.isLoading) return <Screen><Loading /></Screen>;
+  if (vm.isLoading) return <Screen><Skeleton variant="detail" /></Screen>;
   const listing = vm.listing;
   if (!listing) {
     return (

@@ -1,7 +1,17 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { RobleApiClient, RobleApiHttpException } from "roble-client";
+import { RobleApiClient, RobleApiHttpException, RobleApiNetworkException, RobleApiTimeoutException } from "roble-client";
 
+import { connectivity } from "../network/connectivity";
+import { ReadCache } from "../network/ReadCache";
+import { UserFacingError } from "../utils/failure";
 import { Row } from "./guard";
+
+// Lo que se responde a una escritura sin conexión: no se encola nada, porque
+// Roble no tiene transacciones y reenviar más tarde podría chocar con lo que
+// otra persona hizo mientras tanto.
+export const OFFLINE_WRITE = "Sin conexión: lo que ves es lo último guardado. Podrás hacer cambios cuando vuelva el internet.";
+
+const isNetworkError = (e: unknown) => e instanceof RobleApiNetworkException || e instanceof RobleApiTimeoutException;
 
 // El cliente de Roble, uno solo para toda la app.
 //
@@ -13,44 +23,82 @@ import { Row } from "./guard";
 // (aquí en AsyncStorage, que es lo que hay en React Native).
 export class RobleClient {
   readonly db: RobleApiClient;
+  private readonly cache: ReadCache;
 
   constructor(
     private readonly config: { baseUrl: string; contractId: string },
     db?: RobleApiClient,
   ) {
     this.db = db ?? new RobleApiClient({ baseUrl: config.baseUrl, contractId: config.contractId, storage: AsyncStorage });
+    this.cache = new ReadCache(config.contractId);
   }
 
   // ── Base de datos ─────────────────────────────────────────
+  //
+  // Sin conexión, cada lectura devuelve lo último que respondió Roble para esa
+  // misma tabla y filtros, y las escrituras se rechazan con un mensaje claro.
 
-  read(table: string, filters?: Record<string, string>): Promise<Row[]> {
-    return this.db.read(table, filters);
+  async read(table: string, filters?: Record<string, string>): Promise<Row[]> {
+    const key = this.cache.key(table, filters);
+    try {
+      const rows = await this.db.read(table, filters);
+      connectivity.markOnline();
+      this.cache.put(key, rows).catch(() => undefined);
+      return rows;
+    } catch (e) {
+      if (isNetworkError(e)) {
+        connectivity.markOffline();
+        const cached = await this.cache.get(key);
+        if (cached) return cached;
+      }
+      throw e;
+    }
   }
 
   insert(table: string, row: Row): Promise<Row> {
-    return this.db.create(table, row);
+    return this.write(() => this.db.create(table, row));
   }
 
   // Varias filas en **una** petición (`insert`, no `insert-one`): con un equipo
   // de diez serían diez peticiones contra un presupuesto de 100 por minuto.
   async insertMany(table: string, rows: Row[]): Promise<void> {
     if (rows.length === 0) return;
-    await this.db.createMany(table, rows);
+    await this.write(() => this.db.createMany(table, rows));
   }
 
   async update(table: string, id: string, changes: Row): Promise<void> {
     const { _id, id: _ignored, ...clean } = changes;
-    await this.db.update(table, id, clean);
+    await this.write(() => this.db.update(table, id, clean));
   }
 
   async delete(table: string, id: string): Promise<void> {
-    await this.db.delete(table, id);
+    await this.write(() => this.db.delete(table, id));
+  }
+
+  clearCache() {
+    return this.cache.clear();
+  }
+
+  // Se intenta aunque la última lectura haya fallado: si la red ya volvió, la
+  // escritura pasa y quita el aviso; si no, falla rápido con el mensaje.
+  private async write<T>(action: () => Promise<T>): Promise<T> {
+    try {
+      const result = await action();
+      connectivity.markOnline();
+      return result;
+    } catch (e) {
+      if (isNetworkError(e)) {
+        connectivity.markOffline();
+        throw new UserFacingError(OFFLINE_WRITE);
+      }
+      throw e;
+    }
   }
 
   // ── Archivos (bucket S3 del proyecto) ─────────────────────
 
   async upload(params: { fileName: string; data: ArrayBuffer | Uint8Array | Blob; mimeType?: string; folder?: string }) {
-    const { fileId } = await this.db.files.upload(params);
+    const { fileId } = await this.write(() => this.db.files.upload(params));
     return fileId;
   }
 
@@ -60,7 +108,7 @@ export class RobleClient {
   }
 
   removeFile(fileId: string) {
-    return this.db.files.remove(fileId);
+    return this.write(() => this.db.files.remove(fileId));
   }
 
   // ── Inicio de sesión con Google ───────────────────────────

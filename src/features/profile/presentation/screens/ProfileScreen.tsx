@@ -8,8 +8,10 @@ import { Hero, onHero } from "@/src/core/components/Hero";
 import { Icon } from "@/src/core/components/Icon";
 import { ListTile } from "@/src/core/components/ListTile";
 import { IconAvatar } from "@/src/core/components/NameAvatar";
-import { Gap, Loading, Screen, SectionHeader } from "@/src/core/components/Screen";
-import { Card, raisedStyle } from "@/src/core/components/Surfaces";
+import { Gap, Screen, SectionHeader } from "@/src/core/components/Screen";
+import { Skeleton } from "@/src/core/components/Skeleton";
+import { ChoiceChip, Wrap } from "@/src/core/components/Chips";
+import { Card, InfoBanner, raisedStyle } from "@/src/core/components/Surfaces";
 import { T } from "@/src/core/components/T";
 import { useConfirm } from "@/src/core/feedback/DialogProvider";
 import { useReturnRefresh } from "@/src/core/hooks/useReturnRefresh";
@@ -18,6 +20,7 @@ import { useSession } from "@/src/features/auth/presentation/context/SessionCont
 import { isOwner } from "@/src/features/groups/domain/entities/Group";
 import { requestStatusLabel } from "@/src/features/listings/domain/entities/JoinRequest";
 import { memberCount } from "@/src/features/listings/domain/entities/Listing";
+import { SkillsEditor } from "@/src/features/listings/presentation/components/FormPieces";
 import { ThemeMode, useThemePreference } from "@/src/theme/ThemePreference";
 import { useAppTheme } from "@/src/theme/theme";
 import { useProfileViewModel } from "../viewmodels/useProfileViewModel";
@@ -35,7 +38,7 @@ export function ProfileHeaderActions() {
     });
     if (ok) await session.logOut();
   };
-  return <IconButton testID="profile-logout" accessibilityLabel="Cerrar sesión" icon="logout" iconColor={theme.colors.onAppBar} onPress={logOut} />;
+  return <IconButton hitSlop={6} testID="profile-logout" accessibilityLabel="Cerrar sesión" icon="logout" iconColor={theme.colors.onAppBar} onPress={logOut} />;
 }
 
 // El perfil (`profile_page.dart`).
@@ -45,7 +48,7 @@ export default function ProfileScreen() {
   const vm = useProfileViewModel();
   useReturnRefresh(() => vm.load(true));
 
-  if (vm.isLoading) return <Screen><Loading /></Screen>;
+  if (vm.isLoading) return <Screen><Skeleton variant="detail" /></Screen>;
 
   const openListing = (listingId: string) => navigation.navigate("ListingDetail", { listingId });
 
@@ -67,6 +70,46 @@ export default function ProfileScreen() {
           <Stat label="Me gusta recibidos" value={vm.likesReceived} />
           <Stat label="Vistas" value={vm.viewsReceived} />
         </View>
+        <Gap h={28} />
+        <SectionHeader size="medium" title="Mis habilidades" />
+        <T v="bodySmall" color={theme.colors.onSurfaceVariant} style={{ marginTop: 4 }}>
+          Con ellas te recomendamos proyectos en Inicio.
+        </T>
+        <Gap h={12} />
+        {vm.extrasError ? (
+          <InfoBanner icon="alert-circle-outline" text={vm.extrasError} tint={theme.colors.error} />
+        ) : (
+          <>
+            <SkillsEditor testID="profile-skill" skills={vm.skills} onAdd={vm.addSkill} onRemove={vm.removeSkill} placeholder="Ej. React Native, Diseño UI" />
+            {!!vm.skillError && (
+              <T v="bodySmall" color={theme.colors.error} style={{ marginTop: 8 }}>
+                {vm.skillError}
+              </T>
+            )}
+            {vm.suggestedSkills.length > 0 && (
+              <>
+                <T v="labelMedium" color={theme.colors.onSurfaceVariant} style={{ marginTop: 14, marginBottom: 8 }}>
+                  Lo que más piden los proyectos
+                </T>
+                <Wrap>
+                  {vm.suggestedSkills.map((skill) => (
+                    <ChoiceChip key={skill} testID={`suggested-skill-${skill}`} label={skill} icon="plus" selected={false} onPress={() => vm.addSkill(skill)} />
+                  ))}
+                </Wrap>
+              </>
+            )}
+          </>
+        )}
+        <Gap h={28} />
+        <SectionHeader size="medium" title="Guardados" />
+        <Gap h={10} />
+        {vm.extrasError ? null : vm.saved.length === 0 ? (
+          <EmptyState inline icon="bookmark-outline" title="No has guardado proyectos" message="Toca el marcador en un proyecto para volver a él sin buscarlo." />
+        ) : (
+          vm.saved.map((listing) => (
+            <Tile key={listing.id} testID={`saved-${listing.id}`} icon="bookmark-outline" title={listing.title} subtitle={`${listing.category} · ${memberCount(listing)} de ${listing.maxMembers} integrantes`} onPress={() => openListing(listing.id)} />
+          ))
+        )}
         <Gap h={28} />
         <SectionHeader size="medium" title="Apariencia" />
         <Gap h={10} />
@@ -161,10 +204,10 @@ function Stat({ label, value }: { label: string; value: number }) {
   );
 }
 
-function Tile({ icon, title, subtitle, onPress }: { icon: IconName; title: string; subtitle: string; onPress: () => void }) {
+function Tile({ icon, title, subtitle, onPress, testID }: { icon: IconName; title: string; subtitle: string; onPress: () => void; testID?: string }) {
   const theme = useAppTheme();
   return (
-    <Card onPress={onPress} style={{ marginBottom: 10 }}>
+    <Card testID={testID} onPress={onPress} style={{ marginBottom: 10 }}>
       <ListTile
         leading={
           <IconAvatar color={theme.colors.primaryContainer}>

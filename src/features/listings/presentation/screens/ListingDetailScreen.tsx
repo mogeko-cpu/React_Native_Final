@@ -14,11 +14,14 @@ import { HeroDecor } from "@/src/core/components/HeroDecor";
 import { Icon } from "@/src/core/components/Icon";
 import { ListTile } from "@/src/core/components/ListTile";
 import { NameAvatar } from "@/src/core/components/NameAvatar";
-import { Gap, Loading, Screen } from "@/src/core/components/Screen";
+import { Gap, Screen } from "@/src/core/components/Screen";
+import { Skeleton } from "@/src/core/components/Skeleton";
 import { Card, InfoBanner, Panel, raisedStyle } from "@/src/core/components/Surfaces";
 import { T } from "@/src/core/components/T";
 import { useConfirm } from "@/src/core/feedback/DialogProvider";
 import { useSnackbar } from "@/src/core/feedback/SnackbarProvider";
+import { useUndo } from "@/src/core/feedback/useUndo";
+import { projectLink } from "@/src/core/platform/Sharer";
 import { useReturnRefresh } from "@/src/core/hooks/useReturnRefresh";
 import { categoryStyleOf } from "@/src/core/ui/categoryStyle";
 import { DirectoryUser } from "@/src/features/users/domain/entities/DirectoryUser";
@@ -66,28 +69,58 @@ export default function ListingDetailScreen() {
     }
   };
 
-  // El líder edita y elimina desde la barra de arriba.
+  const share = async () => {
+    const result = await vm.share();
+    if (result === "copied") toast("Enlace copiado", "Pégalo donde quieras compartir el proyecto");
+    else if (result === "manual" && vm.listing) snackbar("Copia este enlace", projectLink(vm.listing.id), { duration: 9000 });
+    else if (result == null && vm.lastError()) snackbar("No se pudo compartir", vm.lastError() ?? "", { error: true });
+  };
+
+  const toggleSaved = async () => {
+    const result = await vm.toggleSaved();
+    if (result === true) toast("Proyecto guardado", "Lo encuentras en tu Perfil, en Guardados");
+    else if (result === false) toast("Quitado de guardados", "");
+    else snackbar("No se pudo guardar", vm.lastError() ?? "", { error: true });
+  };
+
+  // Guardar y compartir, para todos; el líder además edita y elimina.
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () =>
-        vm.listing && vm.isLeader ? (
+        vm.listing ? (
           <View style={{ flexDirection: "row" }}>
             <IconButton
-              testID="listing-edit"
-              accessibilityLabel="Editar proyecto"
-              icon="pencil-outline"
+              hitSlop={6}
+              testID="listing-save"
+              accessibilityLabel={vm.isSaved ? "Quitar de guardados" : "Guardar proyecto"}
+              accessibilityState={{ selected: vm.isSaved }}
+              icon={vm.isSaved ? "bookmark" : "bookmark-outline"}
               iconColor={theme.colors.onAppBar}
-              disabled={vm.isWorking}
-              onPress={() => navigation.navigate("EditListing", { listingId })}
+              onPress={toggleSaved}
             />
-            <IconButton
-              testID="listing-delete"
-              accessibilityLabel="Eliminar proyecto"
-              icon="delete-outline"
-              iconColor={theme.colors.onAppBar}
-              disabled={vm.isWorking}
-              onPress={confirmDelete}
-            />
+            <IconButton hitSlop={6} testID="listing-share" accessibilityLabel="Compartir proyecto" icon="share-variant-outline" iconColor={theme.colors.onAppBar} onPress={share} />
+            {vm.isLeader && (
+              <>
+                <IconButton
+                  hitSlop={6}
+                  testID="listing-edit"
+                  accessibilityLabel="Editar proyecto"
+                  icon="pencil-outline"
+                  iconColor={theme.colors.onAppBar}
+                  disabled={vm.isWorking}
+                  onPress={() => navigation.navigate("EditListing", { listingId })}
+                />
+                <IconButton
+                  hitSlop={6}
+                  testID="listing-delete"
+                  accessibilityLabel="Eliminar proyecto"
+                  icon="delete-outline"
+                  iconColor={theme.colors.onAppBar}
+                  disabled={vm.isWorking}
+                  onPress={confirmDelete}
+                />
+              </>
+            )}
           </View>
         ) : null,
     });
@@ -155,7 +188,7 @@ export default function ListingDetailScreen() {
     );
   };
 
-  if (vm.isLoading) return <Screen><Loading /></Screen>;
+  if (vm.isLoading) return <Screen><Skeleton variant="detail" /></Screen>;
   const listing = vm.listing;
   if (!listing) {
     return (
@@ -235,7 +268,7 @@ export default function ListingDetailScreen() {
           )}
           <Gap h={16} />
           <Panel title="Valoración" icon="chart-timeline-variant">
-            <ReactionBar stats={vm.stats} isBusy={vm.isWorking} onReact={vm.react} />
+            <ReactionBar stats={vm.stats} onReact={vm.react} />
           </Panel>
           {vm.isLeader && (
             <>
@@ -398,7 +431,7 @@ function MemberTile({
             visible={open}
             onDismiss={() => setOpen(false)}
             contentStyle={{ backgroundColor: theme.colors.raised, borderRadius: 14 }}
-            anchor={<IconButton testID={`member-menu-${member.userId}`} accessibilityLabel={`Opciones de ${nameOf(member)}`} icon="dots-vertical" disabled={isBusy} onPress={() => setOpen(true)} />}
+            anchor={<IconButton hitSlop={6} testID={`member-menu-${member.userId}`} accessibilityLabel={`Opciones de ${nameOf(member)}`} icon="dots-vertical" disabled={isBusy} onPress={() => setOpen(true)} />}
           >
             <Menu.Item title={member.role === "mentor" ? "Hacer integrante" : "Hacer mentor"} onPress={choose(onToggleMentor)} />
             <Menu.Item title="Transferir liderazgo" onPress={choose(onTransfer)} />
@@ -568,9 +601,24 @@ function RequestsInbox({ listingId, listingTitle, revision, onResolved }: { list
     load(listingId, listingTitle);
   }, [load, listingId, listingTitle, revision]);
 
+  const undo = useUndo();
+
   const resolve = async (request: JoinRequest, accept: boolean) => {
-    if (accept) await requests.accept(request.id);
-    else await requests.reject(request.id);
+    if (!accept) {
+      // Rechazar se puede deshacer unos segundos antes de que llegue a Roble.
+      undo({
+        key: `reject-${request.id}`,
+        title: "Solicitud rechazada",
+        message: `${request.applicantName} verá el estado en su perfil`,
+        hide: () => requests.hide(request.id),
+        restore: () => requests.unhide(request.id),
+        commit: () => requests.commitReject(request.id),
+        after: onResolved,
+        errorTitle: "No se pudo rechazar",
+      });
+      return;
+    }
+    await requests.accept(request.id);
     const failure = requests.lastError();
     if (failure) {
       snackbar("Error", failure);
@@ -580,7 +628,7 @@ function RequestsInbox({ listingId, listingTitle, revision, onResolved }: { list
     snackbar(accept ? "Solicitud aceptada" : "Solicitud rechazada", accept ? `${request.applicantName} ya hace parte del equipo` : "La persona verá el estado en su perfil");
   };
 
-  if (requests.isLoading) return <Loading padded />;
+  if (requests.isLoading) return <Skeleton variant="tiles" padded count={2} />;
   if (requests.error) return <InfoBanner icon="alert-circle-outline" text={requests.error} tint={theme.colors.error} />;
   if (requests.pending.length === 0) return <EmptyState inline icon="inbox-outline" title="No hay solicitudes pendientes" />;
   return (
@@ -596,7 +644,7 @@ function RequestsInbox({ listingId, listingTitle, revision, onResolved }: { list
             <Field label="Habilidades" value={request.skills} />
             <Field label="Disponibilidad" value={request.availability} />
             <View style={{ flexDirection: "row", justifyContent: "flex-end", marginTop: 10, gap: 8 }}>
-              <AppButton mode="text" textColor={theme.colors.outline} onPress={() => resolve(request, false)}>
+              <AppButton testID={`request-reject-${request.id}`} mode="text" textColor={theme.colors.outline} onPress={() => resolve(request, false)}>
                 Rechazar
               </AppButton>
               <AppButton testID={`request-accept-${request.id}`} onPress={() => resolve(request, true)}>
@@ -664,7 +712,7 @@ function Comments({
               <T style={{ marginTop: 2 }}>{comment.body}</T>
             </View>
             {canDelete(comment) && (
-              <IconButton accessibilityLabel="Eliminar comentario" icon="close" size={18} style={{ margin: 0 }} disabled={isBusy} onPress={() => onDelete(comment.id)} />
+              <IconButton hitSlop={6} accessibilityLabel="Eliminar comentario" icon="close" size={18} style={{ margin: 0 }} disabled={isBusy} onPress={() => onDelete(comment.id)} />
             )}
           </View>
         ))

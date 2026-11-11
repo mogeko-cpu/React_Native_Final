@@ -39,6 +39,9 @@ export function ChoiceChip({
       testID={testID}
       accessibilityRole="button"
       accessibilityState={{ selected }}
+      accessibilityLabel={label}
+      // 32 de alto, como en Material 3; el área que se puede tocar llega a 44.
+      hitSlop={{ top: 6, bottom: 6 }}
       onPress={onPress}
       style={[
         {
@@ -89,7 +92,7 @@ export function TagChip({ label, compact, onDelete }: { label: string; compact?:
     >
       <T v={compact ? "labelMedium" : "labelLarge"}>{label}</T>
       {onDelete && (
-        <Pressable accessibilityLabel={`Quitar ${label}`} onPress={onDelete} hitSlop={8} style={{ marginLeft: 6 }}>
+        <Pressable accessibilityRole="button" accessibilityLabel={`Quitar ${label}`} onPress={onDelete} hitSlop={13} style={{ marginLeft: 6 }}>
           <Icon name="close-circle" size={18} color={theme.colors.onSurfaceVariant} />
         </Pressable>
       )}

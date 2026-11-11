@@ -7,7 +7,8 @@ import { AppTextField } from "@/src/core/components/AppTextField";
 import { FilledIconButton } from "@/src/core/components/Buttons";
 import { EmptyState } from "@/src/core/components/EmptyState";
 import { NameAvatar } from "@/src/core/components/NameAvatar";
-import { Loading, Screen } from "@/src/core/components/Screen";
+import { Screen } from "@/src/core/components/Screen";
+import { Skeleton } from "@/src/core/components/Skeleton";
 import { T } from "@/src/core/components/T";
 import { useSnackbar } from "@/src/core/feedback/SnackbarProvider";
 import { timeOfDay } from "@/src/core/utils/formatters";
@@ -44,7 +45,7 @@ export default function GroupChatScreen() {
   };
 
   const body = () => {
-    if (vm.isLoading) return <Loading />;
+    if (vm.isLoading) return <Skeleton variant="chat" count={6} />;
     if (vm.error) return <EmptyState icon="lock-outline" title="No se pudo abrir el chat" message={vm.error} />;
     const messages = [...vm.messages].reverse();
     if (messages.length === 0) {

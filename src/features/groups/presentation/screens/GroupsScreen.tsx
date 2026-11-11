@@ -5,7 +5,8 @@ import { RefreshControl, ScrollView } from "react-native";
 import { EmptyState } from "@/src/core/components/EmptyState";
 import { ExtendedFab } from "@/src/core/components/Fab";
 import { GradientHeader } from "@/src/core/components/GradientHeader";
-import { Gap, Loading, Screen, SectionHeader } from "@/src/core/components/Screen";
+import { Gap, Screen, SectionHeader } from "@/src/core/components/Screen";
+import { Skeleton } from "@/src/core/components/Skeleton";
 import { useSnackbar } from "@/src/core/feedback/SnackbarProvider";
 import { useReturnRefresh } from "@/src/core/hooks/useReturnRefresh";
 import { useAppTheme } from "@/src/theme/theme";
@@ -33,7 +34,7 @@ export default function GroupsScreen() {
   const badgeFor = (group: Group) => (vm.myRequestFor(group) ? "Solicitud pendiente" : null);
 
   const body = () => {
-    if (vm.isLoading) return <Loading />;
+    if (vm.isLoading) return <Skeleton variant="tiles" count={4} />;
     if (vm.error) return <EmptyState icon="alert-circle-outline" title="No se pudieron cargar los grupos" message={vm.error} />;
     return (
       <ScrollView

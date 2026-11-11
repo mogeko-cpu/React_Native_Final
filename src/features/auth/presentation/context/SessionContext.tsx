@@ -5,8 +5,11 @@ import { TOKENS } from "@/src/core/di/tokens";
 import { useSnackbar } from "@/src/core/feedback/SnackbarProvider";
 import { PasswordPolicy } from "@/src/core/roble/passwordPolicy";
 import { messageOf } from "@/src/core/utils/failure";
+import { UnverifiedEmailFailure } from "../../domain/AuthFailure";
 import { AuthUser } from "../../domain/entities/AuthUser";
 import { AuthRepository } from "../../domain/repositories/AuthRepository";
+
+export type LoginResult = "ok" | "unverified" | "failed";
 
 export type SessionViewModel = {
   // `false` mientras se recupera la sesión guardada (el splash sigue visible).
@@ -17,7 +20,8 @@ export type SessionViewModel = {
   // El error del regreso de Google: la pantalla de login lo muestra al abrir.
   pendingSocialError: string;
   consumeSocialError: () => string;
-  login: (email: string, password: string) => Promise<boolean>;
+  // `unverified`: la cuenta existe pero falta el código del correo.
+  login: (email: string, password: string) => Promise<LoginResult>;
   signUp: (name: string, email: string, password: string) => Promise<boolean>;
   signInWithGoogle: () => Promise<boolean>;
   logOut: () => Promise<void>;
@@ -79,15 +83,15 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       setError("");
       if (!isEmail(email) || !password) {
         setError("Escribe tu correo institucional y tu contraseña.");
-        return false;
+        return "failed" as const;
       }
       setLoading(true);
       try {
         setUser(await auth.login(email, password));
-        return true;
+        return "ok" as const;
       } catch (e) {
         setError(messageOf(e, "No se pudo iniciar sesión. Intenta de nuevo."));
-        return false;
+        return e instanceof UnverifiedEmailFailure ? ("unverified" as const) : ("failed" as const);
       } finally {
         setLoading(false);
       }
@@ -129,7 +133,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setError("");
     setLoading(true);
     try {
-      await auth.startGoogleSignIn();
+      const signedIn = await auth.startGoogleSignIn();
+      if (signedIn) setUser(signedIn);
       return true;
     } catch (e) {
       setError(messageOf(e, "No se pudo iniciar sesión con Google. Intenta de nuevo."));

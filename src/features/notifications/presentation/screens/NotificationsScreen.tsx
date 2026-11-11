@@ -26,6 +26,7 @@ export default function NotificationsScreen() {
     navigation.setOptions({
       headerRight: () => (
         <IconButton
+          hitSlop={6}
           testID="mark-all-read"
           accessibilityLabel="Marcar todas como leídas"
           icon="check-all"

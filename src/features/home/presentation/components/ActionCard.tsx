@@ -15,7 +15,7 @@ export function ActionCard({ icon, title, subtitle, onPress, testID }: { icon: I
   const foreground = theme.colors.onPrimary;
   return (
     <View style={[{ borderRadius: 18 }, heroShadow(theme)]}>
-      <Pressable testID={testID} onPress={onPress} style={({ pressed }) => ({ opacity: pressed ? 0.92 : 1 })}>
+      <Pressable testID={testID} onPress={onPress} accessibilityRole="button" accessibilityLabel={`${title}. ${subtitle}`} style={({ pressed }) => ({ opacity: pressed ? 0.92 : 1 })}>
         <LinearGradient
           colors={[theme.colors.primary, mix(theme.colors.primary, "#000000", 0.22)]}
           start={{ x: 0, y: 0 }}

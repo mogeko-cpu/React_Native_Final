@@ -14,6 +14,8 @@ import { EngagementRepositoryImpl } from "@/src/features/listings/data/repositor
 import { ListingRepositoryImpl } from "@/src/features/listings/data/repositories/ListingRepositoryImpl";
 import { MentorshipRepositoryImpl } from "@/src/features/listings/data/repositories/MentorshipRepositoryImpl";
 import { ProjectFileRepositoryImpl } from "@/src/features/listings/data/repositories/ProjectFileRepositoryImpl";
+import { SavedListingRemoteDataSource } from "@/src/features/listings/data/datasources/SavedListingRemoteDataSource";
+import { SavedListingRepositoryImpl } from "@/src/features/listings/data/repositories/SavedListingRepositoryImpl";
 import { TaskRepositoryImpl } from "@/src/features/listings/data/repositories/TaskRepositoryImpl";
 import { NotificationRemoteDataSource } from "@/src/features/notifications/data/datasources/NotificationRemoteDataSource";
 import { NotificationRepositoryImpl } from "@/src/features/notifications/data/repositories/NotificationRepositoryImpl";
@@ -22,6 +24,7 @@ import { UserRemoteDataSource } from "@/src/features/users/data/datasources/User
 import { UserRepositoryImpl } from "@/src/features/users/data/repositories/UserRepositoryImpl";
 import { SystemFilePicker } from "../platform/FilePicker";
 import { SystemLinkOpener } from "../platform/LinkOpener";
+import { SystemSharer } from "../platform/Sharer";
 import { robleConfig } from "../roble/robleConfig";
 import { RobleClient } from "../roble/RobleClient";
 import { Container } from "./container";
@@ -51,10 +54,12 @@ export function createAppContainer(): Container {
       new ProjectFileRepositoryImpl(new ProjectFileRemoteDataSource(client), new FileStorageRemoteDataSource(client), listings),
     )
     .register(TOKENS.MentorshipRepo, new MentorshipRepositoryImpl(new MentorshipRemoteDataSource(client), listings))
+    .register(TOKENS.SavedListingRepo, new SavedListingRepositoryImpl(new SavedListingRemoteDataSource(client), listings))
     .register(TOKENS.GroupRepo, groups)
     .register(TOKENS.GroupChatRepo, new GroupChatRepositoryImpl(new GroupChatRemoteDataSource(client), groups))
     .register(TOKENS.NotificationRepo, notifications)
     .register(TOKENS.NotificationPublisher, new NotificationPublisher(notifications))
     .register(TOKENS.FilePicker, new SystemFilePicker())
-    .register(TOKENS.LinkOpener, new SystemLinkOpener());
+    .register(TOKENS.LinkOpener, new SystemLinkOpener())
+    .register(TOKENS.Sharer, new SystemSharer());
 }

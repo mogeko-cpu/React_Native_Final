@@ -27,6 +27,8 @@ export function useFilesViewModel(listingId: string) {
   // El nombre de lo que se está subiendo, para la barra de progreso.
   const [uploading, setUploading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Los que se quitaron con «Deshacer» todavía disponible.
+  const [hidden, setHidden] = useState<ReadonlySet<string>>(new Set());
   const lastActionError = useRef<string | null>(null);
 
   const load = useCallback(async () => {
@@ -121,9 +123,24 @@ export function useFilesViewModel(listingId: string) {
       setFiles((list) => list.filter((f) => f.id !== file.id));
     }, "No se pudo eliminar el archivo");
 
+  const hide = (id: string) => setHidden((set) => new Set(set).add(id));
+  const unhide = (id: string) =>
+    setHidden((set) => {
+      const next = new Set(set);
+      next.delete(id);
+      return next;
+    });
+
+  // El borrado de verdad, cuando pasó el tiempo de deshacer. Lanza si falla.
+  const commitRemove = async (file: ProjectFile) => {
+    await filesRepo.deleteFile({ fileId: file.id, actorId: user.id });
+    setFiles((list) => list.filter((f) => f.id !== file.id));
+    unhide(file.id);
+  };
+
   return {
     listing,
-    files,
+    files: files.filter((f) => !hidden.has(f.id)),
     isLoading,
     isWorking,
     uploading,
@@ -131,11 +148,14 @@ export function useFilesViewModel(listingId: string) {
     lastActionError: () => lastActionError.current,
     load,
     canDelete: (file: ProjectFile) => file.uploaderId === user.id,
-    uploadCount: files.filter((f) => !isLink(f)).length,
-    linkCount: files.filter(isLink).length,
+    uploadCount: files.filter((f) => !isLink(f) && !hidden.has(f.id)).length,
+    linkCount: files.filter((f) => isLink(f) && !hidden.has(f.id)).length,
     upload,
     addLink,
     open,
     remove,
+    hide,
+    unhide,
+    commitRemove,
   };
 }

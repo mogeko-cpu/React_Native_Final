@@ -8,8 +8,14 @@ import { T } from "../components/T";
 // En web no existe el módulo nativo de animación.
 const NATIVE_DRIVER = Platform.OS !== "web";
 
-type Toast = { title: string; message?: string; top?: boolean; error?: boolean };
-type Show = (title: string, message?: string, options?: { top?: boolean; error?: boolean }) => void;
+export type SnackbarAction = { label: string; onPress: () => void };
+type Options = { top?: boolean; error?: boolean; action?: SnackbarAction; duration?: number };
+type Toast = { title: string; message?: string } & Options;
+type Show = (title: string, message?: string, options?: Options) => void;
+
+// Lo que dura un aviso; con un botón («Deshacer») se le da más tiempo.
+export const SNACKBAR_MS = 3500;
+export const UNDO_MS = 5000;
 
 const SnackbarContext = createContext<Show | null>(null);
 
@@ -31,10 +37,10 @@ export function SnackbarProvider({ children }: { children: React.ReactNode }) {
   const show = useCallback<Show>(
     (title, message, options) => {
       if (timer.current) clearTimeout(timer.current);
-      setToast({ title, message, top: options?.top, error: options?.error, key: Date.now() });
+      setToast({ title, message, ...options, key: Date.now() });
       opacity.setValue(0);
       Animated.timing(opacity, { toValue: 1, duration: 180, useNativeDriver: NATIVE_DRIVER }).start();
-      timer.current = setTimeout(hide, 3500);
+      timer.current = setTimeout(hide, options?.duration ?? (options?.action ? UNDO_MS : SNACKBAR_MS));
     },
     [hide, opacity],
   );
@@ -57,9 +63,14 @@ export function SnackbarProvider({ children }: { children: React.ReactNode }) {
             <Pressable
               testID="snackbar"
               onPress={hide}
+              accessibilityRole="alert"
+              accessibilityLiveRegion="polite"
               style={{
+                flexDirection: "row",
+                alignItems: "center",
                 borderRadius: 14,
-                paddingHorizontal: 16,
+                paddingLeft: 16,
+                paddingRight: toast.action ? 6 : 16,
                 paddingVertical: 12,
                 backgroundColor: toast.error ? theme.colors.errorContainer : theme.colors.inverseSurface,
                 shadowColor: "#000",
@@ -69,13 +80,32 @@ export function SnackbarProvider({ children }: { children: React.ReactNode }) {
                 elevation: 6,
               }}
             >
-              <T v="titleSmall" w={700} color={toast.error ? theme.colors.onErrorContainer : theme.colors.inverseOnSurface}>
-                {toast.title}
-              </T>
-              {!!toast.message && (
-                <T v="bodySmall" color={toast.error ? theme.colors.onErrorContainer : theme.colors.inverseOnSurface} style={{ marginTop: 2 }}>
-                  {toast.message}
+              <View style={{ flex: 1 }}>
+                <T v="titleSmall" w={700} color={toast.error ? theme.colors.onErrorContainer : theme.colors.inverseOnSurface}>
+                  {toast.title}
                 </T>
+                {!!toast.message && (
+                  <T v="bodySmall" color={toast.error ? theme.colors.onErrorContainer : theme.colors.inverseOnSurface} style={{ marginTop: 2 }}>
+                    {toast.message}
+                  </T>
+                )}
+              </View>
+              {toast.action && (
+                <Pressable
+                  testID="snackbar-action"
+                  accessibilityRole="button"
+                  accessibilityLabel={toast.action.label}
+                  onPress={() => {
+                    toast.action?.onPress();
+                    if (timer.current) clearTimeout(timer.current);
+                    hide();
+                  }}
+                  style={{ minHeight: 44, minWidth: 44, paddingHorizontal: 12, justifyContent: "center", marginLeft: 8 }}
+                >
+                  <T v="labelLarge" w={800} color={theme.colors.inversePrimary}>
+                    {toast.action.label}
+                  </T>
+                </Pressable>
               )}
             </Pressable>
           </Animated.View>

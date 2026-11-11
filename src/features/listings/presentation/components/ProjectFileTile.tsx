@@ -43,7 +43,7 @@ export function ProjectFileTile({
           </T>
         </View>
         {canDelete ? (
-          <IconButton accessibilityLabel="Eliminar archivo" icon="delete-outline" disabled={isBusy} onPress={onDelete} />
+          <IconButton hitSlop={6} accessibilityLabel="Eliminar archivo" icon="delete-outline" disabled={isBusy} onPress={onDelete} />
         ) : (
           <View style={{ padding: 12 }}>
             <Icon name={isLink(file) ? "open-in-new" : "download-outline"} size={20} color={theme.colors.onSurfaceVariant} />
