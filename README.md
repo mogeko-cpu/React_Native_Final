@@ -1,16 +1,14 @@
-# Campus Innovate · React Native
+## Integrantes:
 
-Versión para teléfono, en **React Native (Expo)**, de
-[Campus Innovate](https://github.com/mogeko-cpu/Campus_Innovate), la plataforma
-universitaria de proyectos colaborativos hecha originalmente en Flutter. Está
-construida con la arquitectura de
-[r_market](https://github.com/augustosalazar/r_market) y habla con el **mismo
-proyecto de Roble** que la versión Flutter (`campus_innov_0ee3af93b1`), así que
-las dos apps comparten cuentas, tablas y datos.
+GONZALEZ QUINTANILLA SEBASTIAN.
 
-Además de la migración, incluye los cinco flujos nuevos y las mejoras de
-experiencia acordadas en el *Lienzo de alineación interdisciplinaria v3*
-(ver [Cambios de esta iteración](#cambios-de-esta-iteración-lienzo-v3)).
+PATERNINA ARZUZA ESTEFANIA.
+
+TRIANA MARTINEZ LEONEL.
+
+## Video:
+
+Link: https://youtu.be/kB93CcpH0KY
 
 ## Qué hace
 
@@ -87,15 +85,15 @@ el código para verificar una cuenta o recuperar la contraseña es `123456`.
 
 ### Comandos
 
-| Comando | Qué hace |
-|---|---|
-| `npm start` | Servidor de desarrollo (Expo Go) contra Roble |
-| `npm run android` / `npm run ios` | Abre directo en el emulador |
-| `npm run web` | La app en el navegador, en http://localhost:5123 |
-| `npm run start:local` / `npm run web:local` | La app con datos de demostración, sin servidor |
-| `npm run test:ci` | Todas las pruebas, una vez |
-| `npm run typecheck` | TypeScript sin emitir |
-| `npm run lint` | ESLint de Expo |
+| Comando                                     | Qué hace                                         |
+| ------------------------------------------- | ------------------------------------------------ |
+| `npm start`                                 | Servidor de desarrollo (Expo Go) contra Roble    |
+| `npm run android` / `npm run ios`           | Abre directo en el emulador                      |
+| `npm run web`                               | La app en el navegador, en http://localhost:5123 |
+| `npm run start:local` / `npm run web:local` | La app con datos de demostración, sin servidor   |
+| `npm run test:ci`                           | Todas las pruebas, una vez                       |
+| `npm run typecheck`                         | TypeScript sin emitir                            |
+| `npm run lint`                              | ESLint de Expo                                   |
 
 ## Arquitectura
 
@@ -153,17 +151,17 @@ features/<nombre>/
 
 ### Equivalencias con Flutter
 
-| Flutter | React Native |
-|---|---|
-| `GetxController` + `Obx` | hook `useXxxViewModel` con `useState` |
-| `Get.find` / `Bindings` | `Container` + `useInject(TOKENS.X)` |
-| `GetMaterialApp` + rutas con nombre | React Navigation (stack + pestañas) |
-| `Get.snackbar` / `Get.dialog` | `useSnackbar()` / `useConfirm()` |
-| `FlexColorScheme` + Google Fonts | `react-native-paper` (MD3) + `@expo-google-fonts` |
-| `Poller` | `usePoller` (se pausa si otra pantalla queda encima) |
-| `flutter_secure_storage` | AsyncStorage (vía `roble-client`) |
-| `file_picker` / `url_launcher` | `expo-document-picker` / `Linking` |
-| `RobleClient` HTTP propio | `roble-client` (npm) |
+| Flutter                             | React Native                                         |
+| ----------------------------------- | ---------------------------------------------------- |
+| `GetxController` + `Obx`            | hook `useXxxViewModel` con `useState`                |
+| `Get.find` / `Bindings`             | `Container` + `useInject(TOKENS.X)`                  |
+| `GetMaterialApp` + rutas con nombre | React Navigation (stack + pestañas)                  |
+| `Get.snackbar` / `Get.dialog`       | `useSnackbar()` / `useConfirm()`                     |
+| `FlexColorScheme` + Google Fonts    | `react-native-paper` (MD3) + `@expo-google-fonts`    |
+| `Poller`                            | `usePoller` (se pausa si otra pantalla queda encima) |
+| `flutter_secure_storage`            | AsyncStorage (vía `roble-client`)                    |
+| `file_picker` / `url_launcher`      | `expo-document-picker` / `Linking`                   |
+| `RobleClient` HTTP propio           | `roble-client` (npm)                                 |
 
 ## Cambios de esta iteración (lienzo v3)
 
@@ -172,13 +170,13 @@ flujos nuevos y mejoras de experiencia en toda la app. Todo quedó hecho:
 
 ### Flujos nuevos
 
-| # | Flujo | Cómo funciona | Dónde está |
-|---|---|---|---|
-| 1 | **Recuperar contraseña y verificar correo** | «¿Olvidaste tu contraseña?» en el login pide el correo, Roble manda un código y se pone la contraseña nueva (se acepta el código o el enlace completo del correo). La contraseña se revisa con la política de Roble **antes** de gastar una petición. Crear cuenta ahora manda un código de 6 dígitos; entrar sin haberlo confirmado lleva a escribirlo, con «Reenviar código». | `features/auth`: `ForgotPasswordScreen`, `ResetPasswordScreen`, `VerifyEmailScreen`, `useAccountViewModel` |
-| 2 | **Habilidades y «Recomendados para ti»** | En el Perfil se agregan y quitan habilidades (sin duplicados aunque se escriban distinto: «Diseño UI» = «diseno ui») y se sugieren las que más piden los proyectos. Inicio muestra hasta 5 proyectos que buscan gente, donde no estás y que piden al menos una de tus habilidades; primero los que más coinciden. | `users/domain/skills.ts`, `UserRepository`, `listings/domain/recommendations.ts`, Inicio y Perfil |
-| 3 | **Guardar proyectos** | Marcador en la barra del detalle; la lista queda en el Perfil, en «Guardados». Los proyectos borrados se ignoran. | `SavedListingRepository` y sus datasources |
-| 4 | **Compartir un proyecto** | Botón compartir en el detalle: en el teléfono abre el menú del sistema; en la web usa el de compartir del navegador o copia el enlace. El enlace (`/proyecto/<id>` o `campusinnovate://proyecto/<id>`) abre el detalle directamente. | `core/platform/Sharer.ts`, `navigation/linking.ts` |
-| 5 | **Google en el teléfono** | Abre Google dentro de la app y vuelve con `campusinnovate://auth`. Necesita que en la consola de Roble exista un destino llamado `mobile` con esa dirección (ver abajo); mientras no esté, el botón lo dice en vez de abrir un navegador sin regreso. | `core/platform/SocialBrowser.ts`, `AuthRepositoryImpl` |
+| #   | Flujo                                       | Cómo funciona                                                                                                                                                                                                                                                                                                                                                                   | Dónde está                                                                                                 |
+| --- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| 1   | **Recuperar contraseña y verificar correo** | «¿Olvidaste tu contraseña?» en el login pide el correo, Roble manda un código y se pone la contraseña nueva (se acepta el código o el enlace completo del correo). La contraseña se revisa con la política de Roble **antes** de gastar una petición. Crear cuenta ahora manda un código de 6 dígitos; entrar sin haberlo confirmado lleva a escribirlo, con «Reenviar código». | `features/auth`: `ForgotPasswordScreen`, `ResetPasswordScreen`, `VerifyEmailScreen`, `useAccountViewModel` |
+| 2   | **Habilidades y «Recomendados para ti»**    | En el Perfil se agregan y quitan habilidades (sin duplicados aunque se escriban distinto: «Diseño UI» = «diseno ui») y se sugieren las que más piden los proyectos. Inicio muestra hasta 5 proyectos que buscan gente, donde no estás y que piden al menos una de tus habilidades; primero los que más coinciden.                                                               | `users/domain/skills.ts`, `UserRepository`, `listings/domain/recommendations.ts`, Inicio y Perfil          |
+| 3   | **Guardar proyectos**                       | Marcador en la barra del detalle; la lista queda en el Perfil, en «Guardados». Los proyectos borrados se ignoran.                                                                                                                                                                                                                                                               | `SavedListingRepository` y sus datasources                                                                 |
+| 4   | **Compartir un proyecto**                   | Botón compartir en el detalle: en el teléfono abre el menú del sistema; en la web usa el de compartir del navegador o copia el enlace. El enlace (`/proyecto/<id>` o `campusinnovate://proyecto/<id>`) abre el detalle directamente.                                                                                                                                            | `core/platform/Sharer.ts`, `navigation/linking.ts`                                                         |
+| 5   | **Google en el teléfono**                   | Abre Google dentro de la app y vuelve con `campusinnovate://auth`. Necesita que en la consola de Roble exista un destino llamado `mobile` con esa dirección (ver abajo); mientras no esté, el botón lo dice en vez de abrir un navegador sin regreso.                                                                                                                           | `core/platform/SocialBrowser.ts`, `AuthRepositoryImpl`                                                     |
 
 ### Mejoras de experiencia
 
@@ -267,10 +265,10 @@ Son las 16 tablas de la versión Flutter (ver su `docs/roble.md`): `listings`,
 las dos de esta iteración, que hay que crear una vez con
 [`docs/sql/2026_habilidades_y_guardados.sql`](docs/sql/2026_habilidades_y_guardados.sql):
 
-| Tabla | Columnas | Restricción |
-|---|---|---|
-| `user_skills` | `user_id`, `skill` (como la escribió), `skill_key` (sin mayúsculas ni tildes), `created_at` | `UNIQUE (user_id, skill_key)` |
-| `saved_listings` | `user_id`, `listing_id`, `saved_at` | `UNIQUE (user_id, listing_id)` |
+| Tabla            | Columnas                                                                                    | Restricción                    |
+| ---------------- | ------------------------------------------------------------------------------------------- | ------------------------------ |
+| `user_skills`    | `user_id`, `skill` (como la escribió), `skill_key` (sin mayúsculas ni tildes), `created_at` | `UNIQUE (user_id, skill_key)`  |
+| `saved_listings` | `user_id`, `listing_id`, `saved_at`                                                         | `UNIQUE (user_id, listing_id)` |
 
 Los nombres están en `src/core/roble/tables.ts`.
 
